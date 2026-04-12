@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Math Quiz Bracket — KSSS</title>
   <link rel="icon" type="image/png" href="../static/images/Kotu-sss_logo.png">
+  <script>
+    (function() {
+      const key = "ksss-user-theme";
+      const saved = localStorage.getItem(key);
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = saved || (prefersDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
