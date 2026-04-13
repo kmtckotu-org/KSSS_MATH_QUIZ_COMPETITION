@@ -1,0 +1,1032 @@
+{
+  "grade": "10",
+  "competition": "School Math Quiz Competition",
+  "rounds": [
+    {
+      "id": 1,
+      "name": "Round 1",
+      "status": "active",
+      "matches": [
+        {
+          "id": 1,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Zainab 1",
+            "points": 7
+          },
+          "teamB": {
+            "name": "Umar 2 / Umar 3",
+            "points": 5
+          },
+          "winner": "Zainab 1"
+        },
+        {
+          "id": 2,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Ebrima",
+            "points": 20
+          },
+          "teamB": {
+            "name": "Aisha 3",
+            "points": 25
+          },
+          "winner": "Aisha 3"
+        },
+        {
+          "id": 3,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Saffiah 1",
+            "points": 7
+          },
+          "teamB": {
+            "name": "Aisha 2",
+            "points": 17
+          },
+          "winner": "Aisha 2"
+        },
+        {
+          "id": 4,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Ousman",
+            "points": 8
+          },
+          "teamB": {
+            "name": "Umar 1 / Bilal",
+            "points": 24
+          },
+          "winner": "Umar 1 / Bilal"
+        },
+        {
+          "id": 5,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Ali",
+            "points": 10
+          },
+          "teamB": {
+            "name": "Fatimah 2",
+            "points": 12
+          },
+          "winner": "Fatimah 2"
+        },
+        {
+          "id": 6,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Hamza",
+            "points": 20
+          },
+          "teamB": {
+            "name": "Naffisah 2",
+            "points": 0
+          },
+          "winner": "Hamza"
+        },
+        {
+          "id": 7,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Zainab 2",
+            "points": 20
+          },
+          "teamB": {
+            "name": "Roheyah",
+            "points": 0
+          },
+          "winner": "Zainab 2"
+        },
+        {
+          "id": 8,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Aisha 1 / Khadijah ",
+            "points": 17
+          },
+          "teamB": {
+            "name": "Naffisah 1",
+            "points": 5
+          },
+          "winner": "Aisha 1 / Khadijah "
+        },
+        {
+          "id": 9,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Fatimah 1",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Saffiah 2",
+            "points": 20
+          },
+          "winner": "Saffiah 2"
+        }
+      ]
+    }
+  ],
+  "structuralLog": [
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-17T01:03:42.745Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-17T01:03:42.745Z",
+        "round": "Round 3",
+        "teamA": {
+          "name": "Fatimah 2",
+          "match": 3,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Saffiah 2",
+          "match": 3,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-17T01:11:57.743Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 4,
+        "timestamp": "2026-02-17T01:11:57.742Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-17T01:13:26.219Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 2,
+        "timestamp": "2026-02-17T01:13:26.219Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-17T01:13:45.177Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 2,
+        "timestamp": "2026-02-17T01:13:45.177Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-17T01:13:59.346Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 3,
+        "timestamp": "2026-02-17T01:13:59.346Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-17T01:14:47.613Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 2,
+        "timestamp": "2026-02-17T01:14:47.613Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-17T01:15:13.009Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 1,
+        "timestamp": "2026-02-17T01:15:13.009Z"
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-18T13:25:59.540Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-18T13:25:59.540Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Zainab 1",
+          "match": 1,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Umar 2 / Umar 3",
+          "match": 1,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-18T13:26:24.526Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-18T13:26:24.526Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Umar 2 / Umar 3",
+          "match": 1,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Zainab 1",
+          "match": 1,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-18T13:53:10.934Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-18T13:53:10.934Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 1",
+          "match": 9,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Saffiah 2",
+          "match": 9,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-18T13:53:36.174Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-18T13:53:36.174Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Saffiah 2",
+          "match": 9,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Fatimah 1",
+          "match": 9,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-18T18:41:05.211Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 0,
+        "timestamp": "2026-02-18T18:41:05.210Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-18T18:41:42.011Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 0,
+        "timestamp": "2026-02-18T18:41:42.011Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-18T18:42:45.914Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 0,
+        "timestamp": "2026-02-18T18:42:45.914Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-18T18:45:41.543Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 1,
+        "timestamp": "2026-02-18T18:45:41.543Z"
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-18T19:10:28.024Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-18T19:10:28.024Z",
+        "round": "Round 2",
+        "teamA": {
+          "name": "Aisha 1 / Roheyah",
+          "match": 5,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Naffisah 1",
+          "match": 5,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-18T21:26:41.882Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 4,
+        "timestamp": "2026-02-18T21:26:41.882Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-19T01:58:20.684Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 4,
+        "timestamp": "2026-02-19T01:58:20.683Z"
+      }
+    },
+    {
+      "action": "End Tournament",
+      "timestamp": "2026-02-19T02:37:36.748Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 4,
+        "timestamp": "2026-02-19T02:37:36.748Z"
+      }
+    },
+    {
+      "action": "Unlock Final Round",
+      "timestamp": "2026-02-19T02:38:14.783Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 4,
+        "roundName": "Round 5"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-19T02:38:23.083Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 4,
+        "timestamp": "2026-02-19T02:38:23.083Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-19T02:38:59.467Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 3,
+        "timestamp": "2026-02-19T02:38:59.467Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-19T02:39:13.263Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 2,
+        "timestamp": "2026-02-19T02:39:13.263Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-19T02:39:23.922Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 1,
+        "timestamp": "2026-02-19T02:39:23.922Z"
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-19T03:26:44.846Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 1,
+        "timestamp": "2026-02-19T03:26:44.846Z"
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-19T14:38:51.898Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-19T14:38:51.898Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Zainab 1",
+          "match": 1,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Umar 2 / Umar 3",
+          "match": 1,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-19T14:38:59.842Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-19T14:38:59.842Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Ebrima",
+          "match": 2,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Zainab 1",
+          "match": 1,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-19T14:39:07.634Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-19T14:39:07.634Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Zainab 1",
+          "match": 2,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Ebrima",
+          "match": 1,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Cascade Delete Round",
+      "timestamp": "2026-02-21T00:58:33.187Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "roundIndex": 1,
+        "timestamp": "2026-02-21T00:58:33.186Z"
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T01:00:29.545Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T01:00:29.545Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Saffiah 1",
+          "match": 3,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Aisha 2",
+          "match": 3,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:16:41.390Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:16:41.389Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 1",
+          "match": 9,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Fatimah 2",
+          "match": 5,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:19:01.840Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:19:01.840Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 2",
+          "match": 9,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Aisha 1 / Roheyah",
+          "match": 8,
+          "side": "A"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:21:28.432Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:21:28.432Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Hamza",
+          "match": 6,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Roheyah",
+          "match": 7,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:23:03.009Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:23:03.008Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Roheyah",
+          "match": 6,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Ebrima",
+          "match": 2,
+          "side": "A"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:28:14.663Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:28:14.663Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Roheyah",
+          "match": 2,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Ebrima",
+          "match": 6,
+          "side": "A"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:28:59.168Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:28:59.168Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 1",
+          "match": 5,
+          "side": "B"
+        },
+        "teamB": {
+          "name": "Fatimah 2",
+          "match": 8,
+          "side": "A"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:37:33.658Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:37:33.658Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 1",
+          "match": 8,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Fatimah 2",
+          "match": 5,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-21T08:40:50.508Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-21T08:40:50.508Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Aisha 3",
+          "match": 2,
+          "side": "B"
+        },
+        "teamB": {
+          "name": "Naffisah 2",
+          "match": 6,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-22T12:31:40.104Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-22T12:31:40.104Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Naffisah 2",
+          "match": 2,
+          "side": "B"
+        },
+        "teamB": {
+          "name": "Aisha 3",
+          "match": 6,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-22T12:35:11.797Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-22T12:35:11.797Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 1",
+          "match": 5,
+          "side": "B"
+        },
+        "teamB": {
+          "name": "Fatimah 2",
+          "match": 8,
+          "side": "A"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-22T12:40:36.440Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-22T12:40:36.439Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Umar 2 / Umar 3",
+          "match": 1,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Zainab 1",
+          "match": 1,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-22T12:49:04.162Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-22T12:49:04.162Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Aisha 1/Roheyah",
+          "match": 6,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Hamza",
+          "match": 7,
+          "side": "B"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-22T13:01:30.698Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-22T13:01:30.698Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Fatimah 1",
+          "match": 8,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Aisha 1 / Roheyah",
+          "match": 9,
+          "side": "A"
+        }
+      }
+    },
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-22T13:04:24.938Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-22T13:04:24.938Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Aisha 2",
+          "match": 3,
+          "side": "A"
+        },
+        "teamB": {
+          "name": "Saffiah 1",
+          "match": 3,
+          "side": "B"
+        }
+      }
+    }
+  ],
+  "auditLog": [
+    {
+      "timestamp": "2026-02-17T01:13:01.347Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 5"
+        ],
+        "matchesDeleted": 1,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 4",
+        "removedBestLoserFromUnlocked": false
+      }
+    },
+    {
+      "timestamp": "2026-02-17T01:14:31.900Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 4"
+        ],
+        "matchesDeleted": 2,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 3",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-17T01:14:53.337Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 3"
+        ],
+        "matchesDeleted": 3,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 2",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-17T01:15:19.562Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 2"
+        ],
+        "matchesDeleted": 5,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 1",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-18T18:46:47.971Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 2"
+        ],
+        "matchesDeleted": 5,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 1",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-18T21:26:58.272Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 5"
+        ],
+        "matchesDeleted": 1,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 4",
+        "removedBestLoserFromUnlocked": false
+      }
+    },
+    {
+      "timestamp": "2026-02-19T01:59:01.325Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 5"
+        ],
+        "matchesDeleted": 1,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 4",
+        "removedBestLoserFromUnlocked": false
+      }
+    },
+    {
+      "timestamp": "2026-02-19T02:38:51.950Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 5"
+        ],
+        "matchesDeleted": 1,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 4",
+        "removedBestLoserFromUnlocked": false
+      }
+    },
+    {
+      "timestamp": "2026-02-19T02:39:06.138Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 4"
+        ],
+        "matchesDeleted": 2,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 3",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-19T02:39:18.729Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 3"
+        ],
+        "matchesDeleted": 3,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 2",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-19T02:39:30.084Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 2"
+        ],
+        "matchesDeleted": 5,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 1",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-19T03:27:09.476Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 2"
+        ],
+        "matchesDeleted": 5,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 1",
+        "removedBestLoserFromUnlocked": true
+      }
+    },
+    {
+      "timestamp": "2026-02-21T00:58:52.967Z",
+      "action": "CASCADE_DELETE_ROUNDS",
+      "user": "Y-JAMMEH",
+      "details": {
+        "deletedRounds": [
+          "Round 2"
+        ],
+        "matchesDeleted": 5,
+        "bestLoserMatchesDeleted": 0,
+        "unlockedRound": "Round 1",
+        "removedBestLoserFromUnlocked": true
+      }
+    }
+  ]
+}

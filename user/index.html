@@ -19,9 +19,14 @@
       document.documentElement.setAttribute("data-theme", theme);
     })();
   </script>
+  <!-- Prefetch grade data for instant tab switching -->
+  <link rel="prefetch" href="../data/competition-grade10.json" as="fetch" crossorigin>
+  <link rel="prefetch" href="../data/competition-grade11.json" as="fetch" crossorigin>
+  <link rel="prefetch" href="../data/competition-grade12.json" as="fetch" crossorigin>
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
+  <div id="page-transition"></div>
 
   <!-- Header -->
   <header class="site-header">

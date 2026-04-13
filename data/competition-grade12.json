@@ -1,0 +1,188 @@
+{
+  "grade": "12",
+  "competition": "School Math Quiz Competition",
+  "rounds": [
+    {
+      "id": 1,
+      "name": "Round 1",
+      "status": "active",
+      "matches": [
+        {
+          "id": 1,
+          "schedule": {
+            "date": "Wed, Feb 11",
+            "time": "11:20 AM (Morning Break)",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Zainab 1",
+            "points": 17
+          },
+          "teamB": {
+            "name": "Fatimah 1",
+            "points": 0
+          },
+          "winner": "Zainab 1"
+        },
+        {
+          "id": 2,
+          "schedule": {
+            "date": "Fri, Feb 26",
+            "time": "11:20am Immediately after school ",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Ousman",
+            "points": null
+          },
+          "teamB": {
+            "name": "Roheyah",
+            "points": null
+          },
+          "winner": null
+        },
+        {
+          "id": 3,
+          "schedule": {
+            "date": "Pending",
+            "time": "Pending",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Hamza",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Zainab 2",
+            "points": 25
+          },
+          "winner": "Zainab 2"
+        },
+        {
+          "id": 4,
+          "schedule": {
+            "date": "Thu, Feb 12",
+            "time": "4:50 PM (Afternoon Break)",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Saffiah 1",
+            "points": 7
+          },
+          "teamB": {
+            "name": "Naffisah 2",
+            "points": 14
+          },
+          "winner": "Naffisah 2"
+        },
+        {
+          "id": 5,
+          "schedule": {
+            "date": "Tue, Feb 17",
+            "time": "4:50 PM (Afternoon Break)",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Umar 2",
+            "points": 12
+          },
+          "teamB": {
+            "name": "Fatimah 2",
+            "points": 10
+          },
+          "winner": "Umar 2"
+        },
+        {
+          "id": 6,
+          "schedule": {
+            "date": "Tue, Feb 24",
+            "time": "11:20 AM (Morning Break)",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Naffisah 1",
+            "points": 10
+          },
+          "teamB": {
+            "name": "Aisha 2",
+            "points": null
+          },
+          "winner": null
+        },
+        {
+          "id": 7,
+          "schedule": {
+            "date": "Tue, Feb 24",
+            "time": "4:50 PM (Afternoon Break)",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Saffiah 2",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Ebrima",
+            "points": 25
+          },
+          "winner": "Ebrima"
+        },
+        {
+          "id": 8,
+          "schedule": {
+            "date": "Fri, Feb 26",
+            "time": "11:20am Immediately after school ",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Umar 1",
+            "points": null
+          },
+          "teamB": {
+            "name": "Aisha 1",
+            "points": null
+          },
+          "winner": null
+        },
+        {
+          "id": 9,
+          "schedule": {
+            "date": "Fri, Feb 26",
+            "time": "11:20am Immediately After School ",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Bilal / Khadijah",
+            "points": null
+          },
+          "teamB": {
+            "name": "Ali",
+            "points": null
+          },
+          "winner": null
+        }
+      ]
+    }
+  ],
+  "structuralLog": [
+    {
+      "action": "Team Swap",
+      "timestamp": "2026-02-26T20:48:53.120Z",
+      "admin": "Y-JAMMEH",
+      "details": {
+        "admin": "Y-JAMMEH",
+        "timestamp": "2026-02-26T20:48:53.119Z",
+        "round": "Round 1",
+        "teamA": {
+          "name": "Aisha 1",
+          "match": 6,
+          "side": "B"
+        },
+        "teamB": {
+          "name": "Aisha 2",
+          "match": 8,
+          "side": "B"
+        }
+      }
+    }
+  ]
+}

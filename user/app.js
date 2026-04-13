@@ -14,6 +14,7 @@ const MAX_PAST        = 3;
 const MAX_TOTAL       = 6;
 const SURVEY_KEY      = "ksss_survey_done";
 const THEME_KEY       = "ksss-user-theme";
+const POLL_INTERVAL   = 30_000;              // poll every 30 seconds for live changes
 
 // Replace with your actual Netlify function URL after deploying
 const SURVEY_ENDPOINT = "https://YOUR-NETLIFY-SITE.netlify.app/.netlify/functions/survey";
@@ -141,7 +142,7 @@ function hasValidDate(schedule) {
   return !isNaN(d.getTime()) && d < new Date("9999-01-01");
 }
 
-// ── Error / Empty Helpers ────────────────────────────────────
+// ── Skeleton / Error Helpers ────────────────────────────────
 function showError(el, msg) {
   if (!el) return;
   el.innerHTML = `
@@ -151,13 +152,22 @@ function showError(el, msg) {
     </div>`;
 }
 
-function showLoader(el) {
-  if (!el) return;
-  el.innerHTML = `
-    <div class="loader-wrap">
-      <div class="spinner"></div>
-      <p>Loading match data…</p>
-    </div>`;
+/** Renders N shimmer skeleton cards matching the real match-card layout */
+function showSkeleton(el, count) {
+  count = count || 3;
+  const cards = Array.from({ length: count }, () => `
+    <div class="skeleton-card">
+      <div class="skel skel-tag"></div>
+      <div class="skel skel-tag-r"></div>
+      <div class="skel skel-sched"></div>
+      <div class="skel skel-sched2"></div>
+      <div class="skel-teams">
+        <div class="skel skel-team"></div>
+        <div class="skel skel-vs-dot"></div>
+        <div class="skel skel-team"></div>
+      </div>
+    </div>`).join("");
+  el.innerHTML = `<div class="skeleton-grid">${cards}</div>`;
 }
 
 // ── Match Card HTML ──────────────────────────────────────────
@@ -216,13 +226,71 @@ function matchCardHTML(m, opts) {
     </div>`;
 }
 
-// ── Fetch with cache ─────────────────────────────────────────
+// ── JSON Fetch with in-memory cache (stale-while-revalidate) ────────────
+// Each cache entry: { data: object, raw: string }
+const _jsonCache = new Map();
+
 async function fetchJSON(url) {
-  const res = await fetch(url + "?v=" + VERSION, {
-    cache: "default"          // browser cache — fast on return visit / slow network
-  });
+  const key = url + "?v=" + VERSION;
+  // Return cached data instantly if already fetched
+  if (_jsonCache.has(key)) return _jsonCache.get(key).data;
+
+  const res = await fetch(key, { cache: "default" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  _jsonCache.set(key, { data, raw: JSON.stringify(data) });
+  return data;
+}
+
+/**
+ * Poll a URL every POLL_INTERVAL ms.
+ * Uses `cache: "no-cache"` so the server always sends the latest file.
+ * Calls onUpdate(newData) only when the content has actually changed.
+ * Returns the interval ID so the caller can stop it.
+ */
+function pollForChanges(url, onUpdate) {
+  const key = url + "?v=" + VERSION;
+
+  async function check() {
+    try {
+      const res = await fetch(key, { cache: "no-cache" });
+      if (!res.ok) return;
+      const data = await res.json();
+      const raw  = JSON.stringify(data);
+      const cached = _jsonCache.get(key);
+      // Only update if data actually changed
+      if (!cached || cached.raw !== raw) {
+        _jsonCache.set(key, { data, raw });
+        onUpdate(data);
+      }
+    } catch (_) {
+      // Silently ignore network errors during polling
+    }
+  }
+
+  return setInterval(check, POLL_INTERVAL);
+}
+
+/** Silently pre-fetch all grade JSON files in the background. */
+function prefetchAll() {
+  ["10", "11", "12"].forEach(g => {
+    fetchJSON(DATA_PATH + "competition-grade" + g + ".json").catch(() => {});
+  });
+}
+
+// ── Toast notification ────────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg) {
+  let toast = document.getElementById("live-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "live-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -336,7 +404,6 @@ function initSurvey() {
 // PAGE: HOME (index.html)
 // ═══════════════════════════════════════════════════════════
 function initHome() {
-  // Guard: redirect to survey if not done yet
   if (!localStorage.getItem(SURVEY_KEY)) {
     location.replace("survey.html");
     return;
@@ -345,17 +412,12 @@ function initHome() {
   const container = document.getElementById("matches-container");
   if (!container) return;
 
-  showLoader(container);
+  showSkeleton(container, 3);
 
   const grades = ["10", "11", "12"];
 
-  Promise.all(
-    grades.map(g =>
-      fetchJSON(DATA_PATH + "competition-grade" + g + ".json")
-        .then(data => ({ data, grade: g }))
-        .catch(() => null)
-    )
-  ).then(results => {
+  /** Build and inject the match grid from an array of grade results */
+  function renderHome(results, isLiveUpdate) {
     const allMatches = results.flatMap(r => {
       if (!r || !r.data) return [];
       const gradeLevel = r.data.grade || r.grade;
@@ -365,7 +427,6 @@ function initHome() {
     });
 
     const valid = allMatches.filter(m => hasValidDate(m.schedule));
-
     const today = new Date(); today.setHours(0, 0, 0, 0);
 
     function isPast(m) {
@@ -379,7 +440,7 @@ function initHome() {
 
     const past = valid
       .filter(m => isPast(m))
-      .sort((a, b) => parseDate(b.schedule) - parseDate(a.schedule)); // newest first
+      .sort((a, b) => parseDate(b.schedule) - parseDate(a.schedule));
 
     let display;
     if (future.length === 0) {
@@ -398,15 +459,43 @@ function initHome() {
           <p>No matches to display right now.</p>
           <p>Check back soon!</p>
         </div>`;
-      return;
+    } else {
+      container.innerHTML = `<div class="matches-grid">${
+        display.map(m => matchCardHTML(m, { showGrade: true, showPast: true })).join("")
+      }</div>`;
     }
 
-    container.innerHTML = `<div class="matches-grid">${
-      display.map(m => matchCardHTML(m, { showGrade: true, showPast: true })).join("")
-    }</div>`;
+    if (isLiveUpdate) showToast("✓ Scores updated");
+  }
+
+  // Initial fetch — show data as soon as it arrives
+  Promise.all(
+    grades.map(g =>
+      fetchJSON(DATA_PATH + "competition-grade" + g + ".json")
+        .then(data => ({ data, grade: g }))
+        .catch(() => null)
+    )
+  ).then(results => {
+    renderHome(results, false);
+    prefetchAll();
   }).catch(err => {
     showError(container, "Could not load match data. Please check your connection.");
     console.error(err);
+  });
+
+  // Live polling — re-fetch each grade every 30 s; re-render if anything changed
+  grades.forEach(g => {
+    const url = DATA_PATH + "competition-grade" + g + ".json";
+    pollForChanges(url, () => {
+      // One or more grades changed — re-fetch all and re-render
+      Promise.all(
+        grades.map(gr =>
+          fetchJSON(DATA_PATH + "competition-grade" + gr + ".json")
+            .then(data => ({ data, grade: gr }))
+            .catch(() => null)
+        )
+      ).then(results => renderHome(results, true)).catch(() => {});
+    });
   });
 }
 
@@ -414,7 +503,6 @@ function initHome() {
 // PAGE: BRACKET (bracket.html)
 // ═══════════════════════════════════════════════════════════
 function initBracket() {
-  // Guard: redirect to survey if not done yet
   if (!localStorage.getItem(SURVEY_KEY)) {
     location.replace("survey.html");
     return;
@@ -430,109 +518,155 @@ function initBracket() {
     document.title      = "Grade " + grade + " Math Quiz Bracket";
   }
 
-  // Highlight active tab
   document.querySelectorAll(".tab-list a[data-grade]").forEach(a => {
     a.classList.toggle("active", a.dataset.grade === grade);
   });
 
   if (!container) return;
-  showLoader(container);
+  showSkeleton(container, 4);
 
-  fetchJSON(DATA_PATH + "competition-grade" + grade + ".json")
-    .then(data => {
-      const rounds = Array.isArray(data.rounds) ? data.rounds : [];
+  const colorClasses = ["round-1","round-2","round-3","round-4","round-5","round-6"];
 
-      if (rounds.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">🏆</div>
-            <p>No rounds available for Grade ${grade} yet.</p>
-          </div>`;
-        return;
-      }
+  /** Build and inject the round/match HTML from a data object */
+  function renderBracket(data, isLiveUpdate) {
+    const rounds = Array.isArray(data.rounds) ? data.rounds : [];
 
-      // Round color classes: round-1 through round-6 (cycles beyond 6)
-      const colorClasses = ["round-1","round-2","round-3","round-4","round-5","round-6"];
+    if (rounds.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🏆</div>
+          <p>No rounds available for Grade ${grade} yet.</p>
+        </div>`;
+      return;
+    }
 
-      container.innerHTML = rounds.map((round, idx) => {
-        const colorClass = colorClasses[(round.id ? round.id - 1 : idx) % colorClasses.length];
-        const isLocked   = round.status === "locked";
+    container.innerHTML = rounds.map((round, idx) => {
+      const colorClass = colorClasses[(round.id ? round.id - 1 : idx) % colorClasses.length];
+      const isLocked   = round.status === "locked";
 
-        // Sort: completed/dated first, pending last
-        const matches = [...(round.matches || [])].sort((a, b) => {
-          const pa = isPending(a.schedule);
-          const pb = isPending(b.schedule);
-          if (pa && !pb) return 1;
-          if (!pa && pb) return -1;
-          return parseDate(a.schedule) - parseDate(b.schedule);
-        });
+      const matches = [...(round.matches || [])].sort((a, b) => {
+        const pa = isPending(a.schedule);
+        const pb = isPending(b.schedule);
+        if (pa && !pb) return 1;
+        if (!pa && pb) return -1;
+        return parseDate(a.schedule) - parseDate(b.schedule);
+      });
 
-        const cards = matches.map(m => {
-          const isBL = m.type === "best_loser";
-          // Add round badge inside the card (not best-loser badge — that comes from matchCardHTML)
-          const badge = isBL
-            ? ""
-            : `<div class="round-badge">${round.name || "Round " + (idx + 1)}</div>`;
-          return matchCardHTML(m, {}) + badge;
-        }).join("");
-
-        // The matchCardHTML already outputs the card; we need to inject the badge differently
-        // Rebuild manually for bracket to handle the badge cleanly
-        const cardElements = matches.map(m => {
-          const isBL   = m.type === "best_loser";
-          const tA     = m.teamA || {};
-          const tB     = m.teamB || {};
-          const hasSc  = tA.points != null && tB.points != null;
-          let cA = "team", cB = "team";
-          if (hasSc) {
-            if (tA.points > tB.points) cA += " leading";
-            if (tB.points > tA.points) cB += " leading";
-          }
-          if (m.winner === tA.name) cA += " winner";
-          if (m.winner === tB.name) cB += " winner";
-          const ptsA = hasSc ? `<span class="team-pts" style="display:inline-block">${tA.points} pts</span>` : `<span class="team-pts"></span>`;
-          const ptsB = hasSc ? `<span class="team-pts" style="display:inline-block">${tB.points} pts</span>` : `<span class="team-pts"></span>`;
-          const sched = m.schedule || {};
-          const roundBadge = isBL
-            ? `<div class="best-loser-tag">🏆 Best Loser Playoff</div>`
-            : `<div class="round-badge">${round.name || "Round " + (round.id || idx + 1)}</div>`;
-
-          return `
-            <div class="match-card${isBL ? " best-loser" : ""}">
-              ${roundBadge}
-              <div class="match-schedule">
-                <div class="sched-date">${sched.date || "Pending"}</div>
-                <div class="sched-time">${sched.time || "TBD"}</div>
-                <div class="sched-location">${sched.location || "Maths Lab"}</div>
-              </div>
-              <div class="match-teams">
-                <div class="${cA}">
-                  <span class="team-name">${tA.name || "TBD"}</span>
-                  ${ptsA}
-                </div>
-                <span class="vs">VS</span>
-                <div class="${cB}">
-                  <span class="team-name">${tB.name || "TBD"}</span>
-                  ${ptsB}
-                </div>
-              </div>
-            </div>`;
-        }).join("");
+      const cardElements = matches.map(m => {
+        const isBL   = m.type === "best_loser";
+        const tA     = m.teamA || {};
+        const tB     = m.teamB || {};
+        const hasSc  = tA.points != null && tB.points != null;
+        let cA = "team", cB = "team";
+        if (hasSc) {
+          if (tA.points > tB.points) cA += " leading";
+          if (tB.points > tA.points) cB += " leading";
+        }
+        if (m.winner === tA.name) cA += " winner";
+        if (m.winner === tB.name) cB += " winner";
+        const ptsA = hasSc ? `<span class="team-pts" style="display:inline-block">${tA.points} pts</span>` : `<span class="team-pts"></span>`;
+        const ptsB = hasSc ? `<span class="team-pts" style="display:inline-block">${tB.points} pts</span>` : `<span class="team-pts"></span>`;
+        const sched = m.schedule || {};
+        const roundBadge = isBL
+          ? `<div class="best-loser-tag">🏆 Best Loser Playoff</div>`
+          : `<div class="round-badge">${round.name || "Round " + (round.id || idx + 1)}</div>`;
 
         return `
-          <div class="round-section ${colorClass}">
-            <div class="round-title">
-              ${round.name || "Round " + (round.id || idx + 1)}
-              ${isLocked ? " 🔒" : ""}
+          <div class="match-card${isBL ? " best-loser" : ""}">
+            ${roundBadge}
+            <div class="match-schedule">
+              <div class="sched-date">${sched.date || "Pending"}</div>
+              <div class="sched-time">${sched.time || "TBD"}</div>
+              <div class="sched-location">${sched.location || "Maths Lab"}</div>
             </div>
-            <div class="matches-grid">${cardElements}</div>
+            <div class="match-teams">
+              <div class="${cA}">
+                <span class="team-name">${tA.name || "TBD"}</span>
+                ${ptsA}
+              </div>
+              <span class="vs">VS</span>
+              <div class="${cB}">
+                <span class="team-name">${tB.name || "TBD"}</span>
+                ${ptsB}
+              </div>
+            </div>
           </div>`;
       }).join("");
+
+      return `
+        <div class="round-section ${colorClass}">
+          <div class="round-title">
+            ${round.name || "Round " + (round.id || idx + 1)}
+            ${isLocked ? " 🔒" : ""}
+          </div>
+          <div class="matches-grid">${cardElements}</div>
+        </div>`;
+    }).join("");
+
+    if (isLiveUpdate) showToast("✓ Bracket updated");
+  }
+
+  // Initial fetch
+  const gradeUrl = DATA_PATH + "competition-grade" + grade + ".json";
+  fetchJSON(gradeUrl)
+    .then(data => {
+      renderBracket(data, false);
+      // Pre-fetch other grades silently
+      ["10","11","12"].filter(g => g !== grade).forEach(g => {
+        fetchJSON(DATA_PATH + "competition-grade" + g + ".json").catch(() => {});
+      });
     })
     .catch(err => {
       showError(container, "Could not load bracket for Grade " + grade + ".");
       console.error(err);
     });
+
+  // Live polling — re-render automatically when data changes
+  pollForChanges(gradeUrl, data => renderBracket(data, true));
+}
+
+// ──────────────────────────────────────────────────────────────
+// SPA NAVIGATION
+// Every page starts with #page-transition at opacity:1 (covers
+// the page). On first rAF we add .ready → fades to opacity:0
+// (page fades IN). When navigating away we remove .ready →
+// fades to opacity:1 (covers page), then redirect after the
+// transition duration. Result: seamless fade-to-fade transitions
+// with zero white flash on any device or network speed.
+// ──────────────────────────────────────────────────────────────
+function setupSpaNav() {
+  const overlay = document.getElementById("page-transition");
+  if (!overlay) return;
+
+  // ── Fade IN on page load ──────────────────────────────────
+  // Two rAF calls guarantee the browser has painted one frame
+  // at opacity:1 before we start the transition to opacity:0.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.classList.add("ready");
+    });
+  });
+
+  // ── Fade OUT then navigate ────────────────────────────────
+  function navigate(href) {
+    if (overlay.dataset.navigating) return; // prevent double-click
+    overlay.dataset.navigating = "1";
+    overlay.classList.remove("ready");   // triggers fade to opacity:1
+    setTimeout(() => {
+      window.location.href = href;
+    }, 300); // slightly longer than CSS transition (280ms) for safety
+  }
+
+  // ── Attach to nav links ───────────────────────────────────
+  // Use delegation so dynamically-rendered links also work.
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest(".tab-list a, .back-btn");
+    if (!link) return;
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("http") || href.startsWith("#")) return;
+    e.preventDefault();
+    navigate(href);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -541,6 +675,7 @@ function initBracket() {
 function init() {
   initTheme();
   setupThemeToggle();
+  setupSpaNav();
 
   const path = window.location.pathname;
 

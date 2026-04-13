@@ -1,0 +1,166 @@
+{
+  "grade": "11",
+  "competition": "School Math Quiz Competition",
+  "rounds": [
+    {
+      "id": 1,
+      "name": "Round 1",
+      "status": "active",
+      "matches": [
+        {
+          "id": 1,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Aisha 3 / Aisha 4",
+            "points": 10
+          },
+          "teamB": {
+            "name": "Roheyah",
+            "points": 5
+          },
+          "winner": "Aisha 3 / Aisha 4"
+        },
+        {
+          "id": 2,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Ali",
+            "points": 12
+          },
+          "teamB": {
+            "name": "Fatimah 1",
+            "points": 3
+          },
+          "winner": "Ali"
+        },
+        {
+          "id": 3,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Naffisah 1",
+            "points": 2
+          },
+          "teamB": {
+            "name": "Fatimah 2",
+            "points": 0
+          },
+          "winner": "Naffisah 1"
+        },
+        {
+          "id": 4,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Zainab 2",
+            "points": 20
+          },
+          "teamB": {
+            "name": "Hamza",
+            "points": 0
+          },
+          "winner": "Zainab 2"
+        },
+        {
+          "id": 5,
+          "schedule": {
+            "date": "Sat, Feb 14",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Naffisah 2",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Ebrima",
+            "points": 20
+          },
+          "winner": "Ebrima"
+        },
+        {
+          "id": 6,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Zainab 1",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Umar 1 / Bilal",
+            "points": 21
+          },
+          "winner": "Umar 1 / Bilal"
+        },
+        {
+          "id": 7,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Saffiah 2",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Ousman",
+            "points": 25
+          },
+          "winner": "Ousman"
+        },
+        {
+          "id": 8,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Saffiah 1",
+            "points": 5
+          },
+          "teamB": {
+            "name": "Aisha 1 / Khadijah",
+            "points": 24
+          },
+          "winner": "Aisha 1 / Khadijah"
+        },
+        {
+          "id": 9,
+          "schedule": {
+            "date": "Sat, Feb 21",
+            "time": "10:00 AM",
+            "location": "Maths Lab"
+          },
+          "teamA": {
+            "name": "Aisha 2",
+            "points": 0
+          },
+          "teamB": {
+            "name": "Umar 2 / Umar 3",
+            "points": 25
+          },
+          "winner": "Umar 2 / Umar 3"
+        }
+      ]
+    }
+  ]
+}
