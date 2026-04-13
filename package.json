@@ -1,0 +1,9 @@
+{
+  "name": "ksss-math-quiz",
+  "version": "1.0.0",
+  "description": "Math Quiz Competition Site",
+  "main": "index.html",
+  "dependencies": {
+    "googleapis": "^126.0.0"
+  }
+}

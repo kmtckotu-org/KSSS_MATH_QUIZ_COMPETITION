@@ -104,7 +104,7 @@ exports.handler = async function (event) {
 
 function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": "https://ksss-mtc.github.io",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
