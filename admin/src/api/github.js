@@ -6,14 +6,11 @@ import { verifyIntegrity } from '../utils/security.js';
 import { renderForm, updateSidebarStats } from '../ui/render.js';
 import { showAlertModal } from '../ui/modals.js';
 import { getGithubToken } from '../auth/credentials.js';
-import { ErrorHandler } from '../core/errors.js';
 import { resetHistory } from '../core/history.js';
 import { CONFIG } from '../core/config.js';
 import { AdminSecurity } from '../auth/adminSecurity.js';
 
-// Firebase SDKs
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+// Firebase SDKs loaded globally via index.html to bypass local file:// CORS restrictions
 
 const firebaseConfig = {
   apiKey: "AIzaSyA1Hc92r0dd50H71vahVeCZdUPqLaY-XSc",
@@ -25,8 +22,21 @@ const firebaseConfig = {
   databaseURL: "https://ksss-math-quiz-default-rtdb.firebaseio.com"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+// Initialize globally mapped Compat libraries lazy
+let _dbInstance = null;
+function getDB() {
+    if (!window.firebase) {
+        console.error("Firebase global not found!");
+        return null;
+    }
+    if (!window.firebase.apps.length) {
+        window.firebase.initializeApp(firebaseConfig);
+    }
+    if (!_dbInstance) {
+        _dbInstance = window.firebase.database();
+    }
+    return _dbInstance;
+}
 
 export async function validateGithubToken(token) {
     // We retain this function to validate the auth code for Login UX consistency!
@@ -60,8 +70,10 @@ export async function loadMatches(forceRefresh = false) {
     }
 
     try {
-        const dbRef = ref(db, `competition/grade${grade}`);
-        const snapshot = await get(dbRef);
+        const dbInst = getDB();
+        if (!dbInst) throw new Error("Firebase DB not initialized.");
+        const dbRef = dbInst.ref(`competition/grade${grade}`);
+        const snapshot = await dbRef.get();
         
         let loadedData = null;
 
@@ -73,7 +85,7 @@ export async function loadMatches(forceRefresh = false) {
             const rawHtml = await fetch(`https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/main/data/competition-grade${grade}.json?t=${Date.now()}`);
             if (rawHtml.ok) {
                 loadedData = await rawHtml.json();
-                await set(dbRef, loadedData); // Seed the DB!
+                await dbRef.set(loadedData); // Seed the DB!
             } else {
                 throw new Error("Could not find data in Firebase or fallback Github repo.");
             }
@@ -117,10 +129,12 @@ export async function saveToGitHub() {
     if (saveBtn) setButtonLoading(saveBtn, true);
 
     try {
-        const dbRef = ref(db, `competition/grade${currentData.grade}`);
+        const dbInst = getDB();
+        if (!dbInst) throw new Error("Firebase DB not initialized.");
+        const dbRef = dbInst.ref(`competition/grade${currentData.grade}`);
         
         // Native realtime wipe/rewrite
-        await set(dbRef, currentData);
+        await dbRef.set(currentData);
 
         const cacheKey = `grade${currentData.grade}`;
         setCachedData(cacheKey, { data: currentData, sha: "firebase_synced_sha" });

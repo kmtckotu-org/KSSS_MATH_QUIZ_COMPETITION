@@ -230,10 +230,23 @@ function matchCardHTML(m, opts) {
 
 // ── Firebase Realtime Sync ─────────────────────────────────────
 let _firebaseDB = null;
+
+async function loadGlobalScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
 async function initFirebaseDB() {
   if (_firebaseDB) return _firebaseDB;
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js");
-  const { getDatabase } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js");
+  
+  await loadGlobalScript("https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js");
+  await loadGlobalScript("https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js");
   
   const firebaseConfig = {
     apiKey: "AIzaSyA1Hc92r0dd50H71vahVeCZdUPqLaY-XSc",
@@ -244,8 +257,11 @@ async function initFirebaseDB() {
     appId: "1:858027895493:web:bf5e08232f466cbeeddeac",
     databaseURL: "https://ksss-math-quiz-default-rtdb.firebaseio.com"
   };
-  const app = initializeApp(firebaseConfig);
-  _firebaseDB = getDatabase(app);
+
+  if (!window.firebase.apps.length) {
+      window.firebase.initializeApp(firebaseConfig);
+  }
+  _firebaseDB = window.firebase.database();
   return _firebaseDB;
 }
 
@@ -253,12 +269,11 @@ const _jsonCache = new Map();
 
 async function fetchJSON(gradeUrl) {
   // Graceful fallback to static JSON if Firebase errors, mostly used for initial bootstrap
-  const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js");
   const db = await initFirebaseDB();
   const gradeStr = gradeUrl.match(/grade(\d+)/)?.[1] || "10";
   
   try {
-      const snapshot = await get(ref(db, `competition/grade${gradeStr}`));
+      const snapshot = await db.ref(`competition/grade${gradeStr}`).get();
       if (snapshot.exists()) return snapshot.val();
   } catch (e) {
       console.warn("Firebase fetch failed, falling back to static", e);
@@ -274,13 +289,12 @@ async function fetchJSON(gradeUrl) {
  * Listens to Realtime Database instead of HTTP polling.
  */
 async function pollForChanges(gradeUrl, onUpdate) {
-  const { ref, onValue } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js");
   const db = await initFirebaseDB();
   const gradeStr = gradeUrl.match(/grade(\d+)/)?.[1] || "10";
   
-  const dbRef = ref(db, `competition/grade${gradeStr}`);
+  const dbRef = db.ref(`competition/grade${gradeStr}`);
   
-  const unsubscribe = onValue(dbRef, (snapshot) => {
+  const unsubscribe = dbRef.on('value', (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.val();
       const raw = JSON.stringify(data);
