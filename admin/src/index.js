@@ -9,6 +9,20 @@ import { CONFIG } from './core/config.js';
 // Make store globally accessible for debugging
 window.__store = store;
 
+// Populate the admin name dropdown from credentials.js at runtime
+// This means adding/removing admins only requires editing credentials.js
+import { ADMIN_CREDENTIALS } from './auth/credentials.js';
+(function populateAdminDropdown() {
+    const select = document.getElementById("admin-name");
+    if (!select) return;
+    ADMIN_CREDENTIALS.forEach(cred => {
+        const opt = document.createElement("option");
+        opt.value       = cred.name;
+        opt.textContent = cred.name;
+        select.appendChild(opt);
+    });
+})();
+
 // --- Immediate UI correction in case page was restored from bfcache ---
 if (!sessionStorage.getItem("githubToken")) {
     // No token → force login screen

@@ -27,6 +27,7 @@
     --info-bg: #fee2e2;
     --info-border: #fecaca;
     --info-text: #991b1b;
+    --accent: var(--card-accent, var(--primary));
 }
 
 [data-theme="dark"] {
@@ -58,6 +59,7 @@
     --info-bg: rgba(239, 68, 68, 0.1);
     --info-border: rgba(239, 68, 68, 0.3);
     --info-text: #fca5a5;
+    --accent: var(--card-accent, var(--primary));
 }
 
 [data-theme="dark"] .winner-box {
@@ -275,7 +277,8 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
-    font-size: 1.25rem;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    font-weight: 700;
 }
 
 .theme-toggle {
@@ -350,7 +353,7 @@ body {
 
 @media (min-width: 1024px) {
     .dashboard-grid {
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     }
 }
 
@@ -408,7 +411,7 @@ body {
 
 .sidebar h3 {
     margin: 0 0 15px 0;
-    font-size: 18px;
+    font-size: clamp(1rem, 1.5vw, 1.1rem);
     color: var(--primary);
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 10px;
@@ -454,8 +457,8 @@ body {
 }
 
 .content-title {
-    font-size: 22px;
-    font-weight: bold;
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
+    font-weight: 800;
     color: var(--text-main);
     margin: 0;
 }
@@ -493,12 +496,15 @@ body {
 }
 
 .match-card {
-    background: var(--card-bg);
-    border: 2px solid var(--border-color);
+    background-color: var(--card-bg);
+    background-image: linear-gradient(to right, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 60%);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 18px;
     margin-bottom: 16px;
     transition: all 0.3s ease;
+    border-left: 5px solid var(--accent);
+    min-width: 0;
 }
 
 .match-card:hover {
@@ -666,12 +672,13 @@ select.invalid:focus {
 .winner-box {
     margin-top: 15px;
     padding: 10px;
-    background: var(--warning-bg);
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
     border-radius: 8px;
     text-align: center;
-    font-weight: bold;
-    color: var(--warning-text);
-    border: 2px dashed var(--warning-border);
+    font-weight: 800;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 button {

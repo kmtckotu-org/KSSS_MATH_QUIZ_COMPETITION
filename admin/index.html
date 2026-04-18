@@ -44,21 +44,20 @@
             </div>
 
             <!-- LOGIN SECTION -->
+            <!-- Dropdown is populated at runtime from credentials.js — do not add options here -->
             <div id="login-section">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                     <div class="input-group">
                         <label for="admin-name">🔐 Admin Access</label>
                         <select id="admin-name" aria-label="Select your admin name">
                             <option value="">-- Select Your Name --</option>
-                            <option value="Coordinator">Coordinator</option>
-                            <option value="Pico Jr">Pico Jr</option>
-                            <option value="Y-JAMMEH">Y-JAMMEH</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="gh-token">🔑 GitHub Token</label>
-                        <input type="password" id="gh-token" placeholder="Paste github_pat_... token"
-                            aria-label="Enter GitHub personal access token">
+                        <label for="admin-password">🔑 Password</label>
+                        <input type="password" id="admin-password" placeholder="Enter your password"
+                            aria-label="Enter your admin password"
+                            onkeydown="if(event.key==='Enter') KSSS_UI_HOOKS.login()">
                     </div>
                 </div>
                 <button id="login-btn" onclick="KSSS_UI_HOOKS.login()" style="margin-top: 10px;"

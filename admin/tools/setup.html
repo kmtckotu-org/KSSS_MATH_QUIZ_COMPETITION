@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KSSS Admin — Credential Setup Tool</title>
+  <link rel="icon" type="image/png" href="../../static/images/Kotu-sss_logo.png">
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --bg-start: #0f172a;
+      --bg-end: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 540px;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.6);
+    }
+    h1 { 
+      font-size: clamp(1.2rem, 3vw, 1.5rem); 
+      font-weight: 800;
+      color: var(--primary); 
+      margin-bottom: 8px; 
+      letter-spacing: -0.5px;
+    }
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 28px; line-height: 1.5; }
+    label { display: block; font-size: 12px; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    input, select {
+      width: 100%; padding: 11px 14px; background: #0f172a; border: 1.5px solid #334155;
+      border-radius: 8px; color: #f1f5f9; font-size: 14px; margin-bottom: 18px;
+      font-family: inherit; outline: none; transition: border-color 0.2s;
+    }
+    input:focus, select:focus { border-color: #3b82f6; }
+    input[type="password"] { letter-spacing: 2px; }
+    button {
+      width: 100%; padding: 14px; 
+      background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%); 
+      color: #fff; border: none;
+      border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer;
+      transition: all 0.3s ease; margin-top: 4px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    button:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(59, 130, 246, 0.4);
+    }
+    button:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+    .result-box {
+      display: none; margin-top: 24px; padding: 16px; background: #0f172a;
+      border: 1.5px solid #22c55e; border-radius: 10px;
+    }
+    .result-box h3 { font-size: 13px; color: #22c55e; margin-bottom: 10px;
+                     text-transform: uppercase; letter-spacing: 0.5px; }
+    .blob-output {
+      font-family: 'Courier New', monospace; font-size: 11px; color: #a3e635;
+      word-break: break-all; line-height: 1.6; background: #1e293b;
+      padding: 12px; border-radius: 6px; margin-bottom: 12px;
+    }
+    .copy-btn {
+      width: auto; padding: 8px 18px; font-size: 12px; margin-top: 0;
+      background: #334155;
+    }
+    .copy-btn:hover { background: #475569; }
+    .snippet-box {
+      margin-top: 16px; padding: 14px; background: #0f172a;
+      border: 1px solid #334155; border-radius: 8px;
+    }
+    .snippet-box h3 { font-size: 12px; color: #64748b; margin-bottom: 8px;
+                      text-transform: uppercase; letter-spacing: 0.5px; }
+    .snippet-output {
+      font-family: 'Courier New', monospace; font-size: 11px; color: #93c5fd;
+      white-space: pre-wrap; line-height: 1.6;
+    }
+    .warning {
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #fbbf24;
+      margin-bottom: 20px; line-height: 1.6;
+    }
+    .error-msg { color: #f87171; font-size: 13px; margin-top: 8px; display: none; }
+    hr { border: none; border-top: 1px solid #334155; margin: 24px 0; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🔐 KSSS Admin Credential Setup</h1>
+  <p class="subtitle">
+    Run this tool locally to generate an encrypted blob for each admin.
+    The blob goes into <code>credentials.js</code>. Never deploy this tool.
+  </p>
+
+  <div class="warning">
+    ⚠️ Open this file directly in your browser (File → Open). Never host it online.
+    Your GitHub token is only used locally — it is never sent anywhere.
+  </div>
+
+  <label for="admin-name">Admin Name</label>
+  <input type="text" id="admin-name" placeholder="e.g. Y-JAMMEH">
+
+  <label for="admin-role">Role</label>
+  <select id="admin-role">
+    <option value="limited">limited — can enter scores</option>
+    <option value="absolute">absolute — full structural control (VP only)</option>
+  </select>
+
+  <label for="gh-token">GitHub Personal Access Token</label>
+  <input type="password" id="gh-token" placeholder="github_pat_...">
+
+  <label for="password">Password for this admin</label>
+  <input type="password" id="password" placeholder="Choose a strong password">
+
+  <label for="password2">Confirm Password</label>
+  <input type="password" id="password2" placeholder="Repeat the password">
+
+  <button id="generate-btn" onclick="generate()">🔒 Generate Encrypted Blob</button>
+  <p class="error-msg" id="error-msg"></p>
+
+  <div class="result-box" id="result-box">
+    <h3>✅ Encrypted Blob</h3>
+    <div class="blob-output" id="blob-output"></div>
+    <button class="copy-btn" onclick="copyBlob()">📋 Copy Blob</button>
+
+    <div class="snippet-box">
+      <h3>Paste this entry into credentials.js</h3>
+      <div class="snippet-output" id="snippet-output"></div>
+    </div>
+  </div>
+
+  <hr>
+  <p style="font-size:11px;color:#475569;line-height:1.6;">
+    Blob format: PBKDF2 (SHA-256, 200k iterations) key derivation →
+    AES-GCM 256-bit encryption. Salt and IV are random per generation.
+    The same token + password will produce a different blob each time — that is correct.
+  </p>
+</div>
+
+<script>
+// ── Crypto helpers ──────────────────────────────────────────────────────────
+
+async function deriveKey(password, salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 200_000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt"]
+  );
+}
+
+async function encryptToken(token, password) {
+  const enc     = new TextEncoder();
+  const salt    = crypto.getRandomValues(new Uint8Array(16));
+  const iv      = crypto.getRandomValues(new Uint8Array(12));
+  const key     = await deriveKey(password, salt);
+  const cipher  = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    enc.encode(token)
+  );
+  // Pack: salt(16) + iv(12) + ciphertext
+  const packed = new Uint8Array(16 + 12 + cipher.byteLength);
+  packed.set(salt, 0);
+  packed.set(iv, 16);
+  packed.set(new Uint8Array(cipher), 28);
+  return btoa(String.fromCharCode(...packed));
+}
+
+// ── UI ──────────────────────────────────────────────────────────────────────
+
+function showError(msg) {
+  const el = document.getElementById("error-msg");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function clearError() {
+  document.getElementById("error-msg").style.display = "none";
+}
+
+async function generate() {
+  clearError();
+  const name   = document.getElementById("admin-name").value.trim();
+  const role   = document.getElementById("admin-role").value;
+  const token  = document.getElementById("gh-token").value.trim();
+  const pass   = document.getElementById("password").value;
+  const pass2  = document.getElementById("password2").value;
+
+  if (!name)  { showError("Admin name is required."); return; }
+  if (!token) { showError("GitHub token is required."); return; }
+  if (!token.startsWith("github_pat_") && !token.startsWith("ghp_")) {
+    showError("Token does not look like a GitHub PAT. Double-check it."); return;
+  }
+  if (pass.length < 8) { showError("Password must be at least 8 characters."); return; }
+  if (pass !== pass2)  { showError("Passwords do not match."); return; }
+
+  if (!window.crypto || !window.crypto.subtle) {
+    showError("Cryptography API missing! This occurs if you open the file directly (file://). Please start a local server (e.g. npx serve) and access via http://localhost.");
+    return;
+  }
+
+  const btn = document.getElementById("generate-btn");
+  btn.disabled = true;
+  btn.textContent = "Encrypting…";
+
+  try {
+    const blob = await encryptToken(token, pass);
+
+    document.getElementById("blob-output").textContent = blob;
+    document.getElementById("snippet-output").textContent =
+`  {
+    name: "${name}",
+    role: "${role}",
+    blob: "${blob}"
+  },`;
+
+    document.getElementById("result-box").style.display = "block";
+    document.getElementById("result-box").scrollIntoView({ behavior: "smooth" });
+  } catch (e) {
+    showError("Encryption failed: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🔒 Generate Encrypted Blob";
+  }
+}
+
+function copyBlob() {
+  const blob = document.getElementById("blob-output").textContent;
+  const btn = document.querySelector(".copy-btn");
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(blob).then(() => {
+      btn.textContent = "✅ Copied!";
+      setTimeout(() => btn.textContent = "📋 Copy Blob", 2000);
+    }).catch(err => alert("Copy failed: " + err));
+  } else {
+    // Fallback for older browsers or insecure contexts missing clipboard API
+    const textArea = document.createElement("textarea");
+    textArea.value = blob;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      btn.textContent = "✅ Copied!";
+      setTimeout(() => btn.textContent = "📋 Copy Blob", 2000);
+    } catch (err) {
+      alert("Copy failed: " + err);
+    }
+    document.body.removeChild(textArea);
+  }
+}
+</script>
+</body>
+</html>

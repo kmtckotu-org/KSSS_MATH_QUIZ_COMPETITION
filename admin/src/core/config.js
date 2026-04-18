@@ -1,6 +1,6 @@
 const DEFAULT_CONFIG = {
-    owner: "KSSS-MTC",
-    repo: "KSSS_MATH_QUIZ_COMPETITION"
+    owner: "KMTC-org",
+    repo: "KSSS_MATH_QUIZ_COMPETITION-now"
 };
 
 function resolveRepositoryConfig() {
