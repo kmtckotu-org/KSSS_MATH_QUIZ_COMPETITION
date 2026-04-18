@@ -1,40 +1,44 @@
 // admin/src/auth/credentials.js
 //
-// ── HOW TO MANAGE ADMINS ──────────────────────────────────────────────────────
+// ── ADMIN MANAGEMENT ──────────────────────────────────────────────────────────
 //
-// This is the ONLY file you edit for admin management.
+// Admins are now self-registered at first login on their device.
+// There is no pre-defined name list here.
 //
-// TO ADD AN ADMIN:
-//   Add an entry with their name and role. That is it.
-//   They do their own first-time setup on their device (name + token + password).
+// ── HOW IT WORKS ──────────────────────────────────────────────────────────────
 //
-// TO REMOVE AN ADMIN:
-//   Delete their entry. Their device credentials become useless immediately.
+//   First login on a device:
+//     → Select "➕ First login on this device" from the dropdown
+//     → Choose role: Limited Admin or Absolute Admin
+//     → Enter your name, GitHub token, and a password
+//     → If Absolute: also enter the structural authority code
+//     → Your encrypted token is stored on this device only
 //
-// TO RENAME AN ADMIN:
-//   Change the name. They will need to do first-time setup again on their device.
+//   Every login after that:
+//     → Select your name from the dropdown
+//     → Enter your password
 //
 // ── ROLES ─────────────────────────────────────────────────────────────────────
 //
-//   "absolute" — full structural control (VP only).
-//               Y-JAMMEH also requires an additional structural auth code.
+//   "absolute" — full structural control.
+//               Requires the structural authority code at first-time setup.
+//               Only the VP knows this code.
+//
 //   "limited"  — can enter and save scores only.
+//               No code required.
 //
-// ── HOW CREDENTIALS WORK ──────────────────────────────────────────────────────
+// ── SECURITY MODEL ────────────────────────────────────────────────────────────
 //
-//   Each admin's GitHub token is encrypted with their own password using AES-GCM
-//   and stored in localStorage on their own device.
+//   • Each admin's GitHub token is encrypted with their password using AES-GCM
+//     (PBKDF2, 200,000 iterations) and stored in localStorage on their device.
 //
-//   First login on a new device: enter name + GitHub token + chosen password.
-//   Every login after that:      enter name + password only.
+//   • The device's localStorage is the security boundary for returning users.
+//     No one else on a different device can use your credentials.
 //
-//   No tokens in files. No blobs to copy. No files to commit.
-//   Each admin manages their own device credentials independently.
+//   • The structural authority code is the gate to claiming the Absolute role.
+//     Its SHA-256 hash is stored in adminSecurity.js.
+//
+//   • To revoke an admin: remove their GitHub collaborator access.
+//     Their token will fail validation on the next login.
 //
 // ─────────────────────────────────────────────────────────────────────────────
-
-export const ADMIN_CREDENTIALS = [
-  { name: "Y-JAMMEH",    role: "absolute" },
-  { name: "Pico Jr",     role: "limited"  },
-  { name: "Coordinator", role: "limited"  }
-];

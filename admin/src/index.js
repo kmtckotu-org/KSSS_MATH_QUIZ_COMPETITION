@@ -9,19 +9,38 @@ import { CONFIG } from './core/config.js';
 // Make store globally accessible for debugging
 window.__store = store;
 
-// Populate the admin name dropdown from credentials.js at runtime
-// This means adding/removing admins only requires editing credentials.js
-import { ADMIN_CREDENTIALS } from './auth/credentials.js';
-(function populateAdminDropdown() {
+// Populate the admin name dropdown from the device registry (localStorage).
+// Names are added here the first time an admin sets up on this device.
+function populateAdminDropdown() {
     const select = document.getElementById("admin-name");
     if (!select) return;
-    ADMIN_CREDENTIALS.forEach(cred => {
+
+    // Keep only the default placeholder option
+    const defaultOpt = select.options[0];
+    select.innerHTML = "";
+    if (defaultOpt) select.appendChild(defaultOpt);
+
+    // Add names from the device registry
+    let registry = [];
+    try { registry = JSON.parse(localStorage.getItem("ksss_admin_registry") || "[]"); }
+    catch { /* ignore */ }
+    registry.forEach(name => {
         const opt = document.createElement("option");
-        opt.value       = cred.name;
-        opt.textContent = cred.name;
+        opt.value       = name;
+        opt.textContent = name;
         select.appendChild(opt);
     });
-})();
+
+    // Always include the first-time option at the bottom
+    const ftOpt = document.createElement("option");
+    ftOpt.value       = "__first_time__";
+    ftOpt.textContent = "\u2795 First login on this device";
+    select.appendChild(ftOpt);
+}
+populateAdminDropdown();
+
+// Expose so adminSecurity.js can refresh after a new admin registers
+window.__refreshAdminDropdown = populateAdminDropdown;
 
 // --- Immediate UI correction in case page was restored from bfcache ---
 if (!sessionStorage.getItem("githubToken")) {
@@ -104,6 +123,7 @@ async function initializeApp() {
             hooks.login               = authModule.adminSecurity.AdminSecurity.login;
             hooks.logout              = authModule.adminSecurity.AdminSecurity.logout;
             hooks.onAdminNameChange   = authModule.adminSecurity.AdminSecurity.onAdminNameChange;
+            hooks.selectRole          = authModule.adminSecurity.AdminSecurity.selectRole;
             hooks.resetCredentials    = authModule.adminSecurity.AdminSecurity.resetCredentials;
         }
 

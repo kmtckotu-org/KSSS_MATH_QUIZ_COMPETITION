@@ -8,6 +8,36 @@
     <title>KSSS Maths Quiz Admin Dashboard</title>
     <link rel="icon" type="image/png" href="../static/images/Kotu-sss_logo.png">
     <link rel="stylesheet" href="src/styles/main.css">
+    <style>
+        /* Role toggle button active states */
+        .role-toggle {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 2px solid var(--border-color, #334155);
+            background: transparent;
+            color: var(--text-muted, #94a3b8);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .role-toggle[data-active="true"].limited {
+            border-color: var(--primary, #3b82f6);
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--primary, #3b82f6);
+        }
+        .role-toggle[data-active="true"].absolute {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+            color: #f59e0b;
+        }
+        .role-toggle:hover:not([data-active="true"]) {
+            border-color: var(--text-muted, #94a3b8);
+            color: var(--text-primary, #e2e8f0);
+        }
+    </style>
 </head>
 
 <body>
@@ -43,7 +73,7 @@
                 Please authenticate to access tournament management
             </div>
 
-            <!-- LOGIN SECTION — dropdown populated from credentials.js at runtime -->
+            <!-- LOGIN SECTION — dropdown populated from localStorage registry at runtime -->
             <div id="login-section">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                     <div class="input-group">
@@ -61,19 +91,65 @@
                     </div>
                 </div>
 
-                <!-- Token field: only shown on first login on this device -->
+                <!-- First-time: name text input (shown when ➕ option selected) -->
+                <div id="new-name-row" style="display:none; margin-top: 12px;">
+                    <div class="input-group">
+                        <label for="admin-name-new">📛 Your Name</label>
+                        <input type="text" id="admin-name-new" placeholder="Enter your full name"
+                            aria-label="Enter your admin name for first-time setup"
+                            autocomplete="name">
+                    </div>
+                </div>
+
+                <!-- First-time: role toggle (shown when ➕ option selected) -->
+                <div id="role-selector-row" style="display:none; margin-top: 12px;">
+                    <div class="input-group">
+                        <label>👤 Admin Role</label>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" id="role-btn-limited"
+                                class="role-toggle limited" data-active="true"
+                                onclick="KSSS_UI_HOOKS.selectRole('limited')"
+                                aria-label="Select Limited Admin role">
+                                🔵 Limited Admin
+                            </button>
+                            <button type="button" id="role-btn-absolute"
+                                class="role-toggle absolute"
+                                onclick="KSSS_UI_HOOKS.selectRole('absolute')"
+                                aria-label="Select Absolute Admin role">
+                                👑 Absolute Admin
+                            </button>
+                        </div>
+                        <!-- Hidden input tracks the selected role value -->
+                        <input type="hidden" id="role-select" value="limited">
+                    </div>
+                </div>
+
+                <!-- Token field: shown on first login or after credential reset -->
                 <div id="token-input-row" style="display:none; margin-top: 12px;">
                     <div class="input-group">
-                        <label for="admin-token">🔗 GitHub Token (first time setup)</label>
+                        <label for="admin-token">🔗 GitHub Token</label>
                         <input type="password" id="admin-token" placeholder="github_pat_..."
-                            aria-label="Enter GitHub personal access token">
+                            aria-label="Enter GitHub personal access token"
+                            autocomplete="off">
                     </div>
                     <div id="setup-note" style="display:none; font-size:12px; color:var(--text-muted);
                         padding: 10px 14px; background: var(--active-bg); border-radius: 8px;
                         border: 1px solid var(--active-border); margin-top: 8px; line-height: 1.6;">
-                        🔒 <strong>First login on this device.</strong> Enter your GitHub token and
-                        choose a password. Your token will be encrypted and stored on this device only.
-                        You will only need your password from now on.
+                        🔒 <strong>First login on this device.</strong>
+                        Your GitHub token will be encrypted with your password and stored only on this device.
+                        On every login after this, you will only need your password.
+                    </div>
+                </div>
+
+                <!-- Absolute admin code: shown when Absolute Admin role is selected -->
+                <div id="code-input-row" style="display:none; margin-top: 12px;">
+                    <div class="input-group">
+                        <label for="admin-code">🔐 Absolute Admin Code</label>
+                        <input type="password" id="admin-code"
+                            placeholder="Enter structural authority code"
+                            aria-label="Enter absolute admin authorization code"
+                            autocomplete="off"
+                            onkeydown="if(event.key==='Enter') KSSS_UI_HOOKS.login()">
                     </div>
                 </div>
 
@@ -81,7 +157,7 @@
                     aria-label="Login to access admin control center">🚀 Access Control Center</button>
 
                 <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: center;">
-                    Token expired or forgotten password?
+                    Forgotten password or expired token?
                     <a href="#" onclick="KSSS_UI_HOOKS.resetCredentials(); return false;"
                         style="color: var(--danger);">Reset credentials on this device</a>
                 </div>
