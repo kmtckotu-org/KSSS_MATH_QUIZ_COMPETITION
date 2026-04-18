@@ -100,7 +100,19 @@ async function decryptBlob(blob, password) {
     const data = raw.slice(28);
     const key  = await deriveKey(password, salt, "decrypt");
     const dec  = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
-    return JSON.parse(new TextDecoder().decode(dec));
+    const text = new TextDecoder().decode(dec);
+
+    // Try new format first: { token, role }
+    try {
+      const obj = JSON.parse(text);
+      if (obj && typeof obj === 'object' && obj.token) return obj;
+    } catch { /* not JSON */ }
+
+    // Fall back to old format: plain token string
+    // role will be null — handled by the login() caller
+    if (text && text.length > 10) return { token: text, role: null };
+
+    return null;
   } catch {
     return null; // wrong password or corrupted blob
   }
@@ -403,7 +415,7 @@ export const AdminSecurity = (() => {
         return;
       }
 
-      // ── RETURNING LOGIN ──────────────────────────────────────────────────
+        // ── RETURNING LOGIN ──────────────────────────────────────────────────
       if (mode === "returning") {
         const name    = el("admin-name")?.value;
         const blob    = getStoredBlob(name);
@@ -417,7 +429,10 @@ export const AdminSecurity = (() => {
           return;
         }
 
-        const { token, role: storedRole } = payload;
+        let { token, role: storedRole } = payload;
+
+        // Old-format blob had no role stored — default to limited
+        if (!storedRole) storedRole = ROLE_LIMITED;
 
         // Check the token is still active on GitHub
         const valid = await validateGithubToken(token);
@@ -457,9 +472,15 @@ export const AdminSecurity = (() => {
    * Clears the encrypted blob for this admin.
    * The name stays in the registry and dropdown — only the credentials are reset.
    */
-  function resetCredentials() {
+  async function resetCredentials() {
     const name = el("admin-name")?.value;
-    if (!name || name === "__first_time__") return;
+    if (!name || name === "__first_time__") {
+      await showAlertModal(
+        "No Name Selected",
+        "Please select your name from the dropdown first, then click \"Reset credentials\"."
+      );
+      return;
+    }
     clearBlob(name);
     onAdminNameChange(); // re-render: switches to "reset" mode UI
   }

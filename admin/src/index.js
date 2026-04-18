@@ -20,10 +20,29 @@ function populateAdminDropdown() {
     select.innerHTML = "";
     if (defaultOpt) select.appendChild(defaultOpt);
 
-    // Add names from the device registry
+    // ── Migration: pull names from any existing ksss_admin_cred_* keys ─────────
+    // This ensures anyone who had credentials stored under the old system
+    // still sees their name in the dropdown without needing to re-register.
     let registry = [];
     try { registry = JSON.parse(localStorage.getItem("ksss_admin_registry") || "[]"); }
-    catch { /* ignore */ }
+    catch { registry = []; }
+
+    let migrated = false;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("ksss_admin_cred_")) {
+            const name = key.slice("ksss_admin_cred_".length);
+            if (name && !registry.includes(name)) {
+                registry.push(name);
+                migrated = true;
+            }
+        }
+    }
+    if (migrated) {
+        localStorage.setItem("ksss_admin_registry", JSON.stringify(registry));
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     registry.forEach(name => {
         const opt = document.createElement("option");
         opt.value       = name;
