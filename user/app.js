@@ -269,8 +269,15 @@ const _jsonCache = new Map();
 
 async function fetchJSON(gradeUrl) {
   const gradeStr = gradeUrl.match(/grade(\d+)/)?.[1] || "10";
+  const cacheKey = `ksss_cache_grade${gradeStr}`;
   
-  // Graceful fallback to static JSON if Firebase errors, hangs, or is blocked
+  // 1. DYNAMIC CACHING (Instant Load - No Skeleton needed!)
+  try {
+      const saved = localStorage.getItem(cacheKey);
+      if (saved) return JSON.parse(saved);
+  } catch (e) { /* Ignore cache errors */ }
+  
+  // 2. Graceful fallback to static JSON if Firebase errors, hangs, or is blocked
   try {
       const db = await initFirebaseDB();
       const dbRef = db.ref(`competition/grade${gradeStr}`);
@@ -306,6 +313,7 @@ async function pollForChanges(gradeUrl, onUpdate) {
       const cached = _jsonCache.get(gradeStr);
       if (!cached || cached.raw !== raw) {
         _jsonCache.set(gradeStr, { data, raw });
+        try { localStorage.setItem(`ksss_cache_grade${gradeStr}`, raw); } catch(e){} // Persist to LocalStorage!
         // Optional slight delay so UI isn't jarring on fast keystrokes
         setTimeout(() => onUpdate(data), 150);
       }
