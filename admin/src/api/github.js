@@ -11,15 +11,32 @@ import { renderForm, updateSidebarStats } from '../ui/render.js';
 import { verifyIntegrity } from '../utils/security.js';
 import { showAlertModal } from '../ui/modals.js';
 
-// --- NEW: Validate GitHub token by fetching the authenticated user ---
+// --- Validate GitHub token: checks authentication AND repo write access ---
 export async function validateGithubToken(token) {
     try {
-        const res = await fetch('https://api.github.com/user', {
-            headers: { Authorization: `token ${token}` }
+        // Step 1: Is the token itself valid?
+        const userRes = await fetch('https://api.github.com/user', {
+            headers: { Authorization: `Bearer ${token}` }
         });
-        return res.ok; // 200 OK means token is valid
+        if (!userRes.ok) return false;
+
+        // Step 2: Can this token reach the target repo with push access?
+        const repoRes = await fetch(
+            `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!repoRes.ok) {
+            // Token is valid but can't access this repo at all
+            return 'no_repo_access';
+        }
+        const repoData = await repoRes.json();
+        if (!repoData.permissions?.push) {
+            // Token can read the repo but has no write permission
+            return 'no_write';
+        }
+        return true; // ✅ valid token with repo write access
     } catch {
-        return false; // network error or other failure
+        return false; // network error
     }
 }
 
@@ -46,9 +63,15 @@ async function fetchWithRetry(url, options = {}, maxRetries = CONSTANTS.MAX_RETR
                     case CONSTANTS.HTTP_UNAUTHORIZED:
                         errorMessage = "Authentication failed. Please check your GitHub token.";
                         break;
-                    case CONSTANTS.HTTP_FORBIDDEN:
-                        errorMessage = "Access forbidden. Token may have expired or lacks permissions.";
+                    case CONSTANTS.HTTP_FORBIDDEN: {
+                        // Log the actual GitHub error for diagnosis
+                        if (CONFIG.debug) console.error("GitHub 403 body:", errorText);
+                        const isSso = errorText.includes("organization") || errorText.includes("SSO") || errorText.includes("SAML");
+                        errorMessage = isSso
+                            ? "Access forbidden: your token needs SSO authorization for the KMTC-org organization. Visit github.com/settings/tokens to authorize it."
+                            : "Access forbidden. Token may have expired or lacks write permission to this repository.";
                         break;
+                    }
                     case CONSTANTS.HTTP_NOT_FOUND:
                         errorMessage = "Repository or file not found.";
                         break;
@@ -216,6 +239,19 @@ export async function saveToGitHub() {
         if (e.status === 409) {
             showStatus("⚠️ Conflict detected. Refreshing data...", "#f59e0b");
             loadMatches(true);
+        } else if (e.status === 403) {
+            showStatus("❌ Save failed: token lacks write access.", "#ef4444");
+            await showAlertModal(
+                "Save Failed — Token Permissions",
+                "GitHub rejected the save with a 403 Forbidden error.\n\n" +
+                "This usually means one of the following:\n" +
+                "  • Your GitHub token has expired (generate a new one)\n" +
+                "  • Your token lacks 'Contents: write' permission for this repo\n" +
+                "  • For classic PATs: the 'repo' scope is required\n" +
+                "  • For fine-grained PATs: select the KMTC-org account, not personal\n" +
+                "  • The KMTC-org may require SSO authorization for your token\n\n" +
+                "Fix: Click 'Reset credentials' on the login screen to set up a new token."
+            );
         } else {
             showStatus(`Error: ${e.message}`, "#ef4444");
         }

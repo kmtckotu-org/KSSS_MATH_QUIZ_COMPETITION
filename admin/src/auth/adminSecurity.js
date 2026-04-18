@@ -344,8 +344,22 @@ export const AdminSecurity = (() => {
           }
         }
 
-        // Validate GitHub token
+        // Validate GitHub token — checks authentication AND repo write access
         const valid = await validateGithubToken(tokenRaw);
+        if (valid === 'no_repo_access') {
+          await showAlertModal("Token Can't Access Repository",
+            "Your token is valid but cannot access the KMTC-org repository.\n\n" +
+            "For fine-grained PATs: make sure you selected the KMTC-org organization (not personal account) when creating the token, " +
+            "and that the organization permits fine-grained PATs.");
+          return;
+        }
+        if (valid === 'no_write') {
+          await showAlertModal("Token Lacks Write Permission",
+            "Your token can read the repository but cannot write to it.\n\n" +
+            "  \u2022 Classic PAT: enable the 'repo' scope\n" +
+            "  \u2022 Fine-grained PAT: set Contents to 'Read and write'");
+          return;
+        }
         if (!valid) {
           await showAlertModal("Invalid Token",
             "The GitHub token is invalid or has expired.\nPlease generate a new token and try again.");
@@ -400,6 +414,18 @@ export const AdminSecurity = (() => {
         }
 
         const valid = await validateGithubToken(tokenRaw);
+        if (valid === 'no_repo_access') {
+          await showAlertModal("Token Can't Access Repository",
+            "Your token is valid but cannot access the KMTC-org repository.\n" +
+            "Make sure the token is scoped to the KMTC-org organization.");
+          return;
+        }
+        if (valid === 'no_write') {
+          await showAlertModal("Token Lacks Write Permission",
+            "Your token can read the repo but cannot write to it.\n" +
+            "Enable the 'repo' scope (classic) or 'Contents: read and write' (fine-grained).");
+          return;
+        }
         if (!valid) {
           await showAlertModal("Invalid Token",
             "The GitHub token is invalid or has expired. Please generate a new one.");
@@ -434,16 +460,24 @@ export const AdminSecurity = (() => {
         // Old-format blob had no role stored — default to limited
         if (!storedRole) storedRole = ROLE_LIMITED;
 
-        // Check the token is still active on GitHub
+        // Check the token is still active and has write access
         const valid = await validateGithubToken(token);
-        if (!valid) {
-          // Token expired — force re-setup
+        if (valid === false || valid === 'no_repo_access') {
+          // Token expired or repo access revoked — force re-setup
           clearBlob(name);
           onAdminNameChange(); // switches to reset mode UI
-          await showAlertModal("Token Expired",
-            "Your stored GitHub token has expired.\n\n" +
-            "Please enter a new token and choose a new password.");
+          await showAlertModal("Token Expired or Revoked",
+            "Your stored GitHub token has expired or no longer has access to this repository.\n\n" +
+            "Please enter a new token to restore your credentials.");
           return;
+        }
+        if (valid === 'no_write') {
+          // Token is valid but write access was revoked — warn but still log in (read works)
+          await showAlertModal("Write Access Removed",
+            "Warning: your token can no longer write to this repository.\n" +
+            "You can view data but cannot save changes.\n\n" +
+            "Use 'Reset credentials' to set up a new token with write access.");
+          // Still let them log in in read-only context
         }
 
         await setRole(storedRole);
