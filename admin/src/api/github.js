@@ -73,7 +73,12 @@ export async function loadMatches(forceRefresh = false) {
         const dbInst = getDB();
         if (!dbInst) throw new Error("Firebase DB not initialized.");
         const dbRef = dbInst.ref(`competition/grade${grade}`);
-        const snapshot = await dbRef.get();
+        
+        // Timeout wrapper for get() to prevent infinite spinning if RTDB doesn't exist
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Timeout: Could not reach Firebase. Did you create the Realtime Database in your Firebase Console?")), 10000)
+        );
+        const snapshot = await Promise.race([dbRef.get(), timeoutPromise]);
         
         let loadedData = null;
 

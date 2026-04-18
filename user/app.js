@@ -268,15 +268,20 @@ async function initFirebaseDB() {
 const _jsonCache = new Map();
 
 async function fetchJSON(gradeUrl) {
-  // Graceful fallback to static JSON if Firebase errors, mostly used for initial bootstrap
-  const db = await initFirebaseDB();
   const gradeStr = gradeUrl.match(/grade(\d+)/)?.[1] || "10";
   
+  // Graceful fallback to static JSON if Firebase errors, hangs, or is blocked
   try {
-      const snapshot = await db.ref(`competition/grade${gradeStr}`).get();
+      const db = await initFirebaseDB();
+      const dbRef = db.ref(`competition/grade${gradeStr}`);
+      
+      // 5-second graceful timeout so the skeleton loader doesn't hang forever
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase timeout")), 5000));
+      const snapshot = await Promise.race([dbRef.get(), timeoutPromise]);
+      
       if (snapshot.exists()) return snapshot.val();
   } catch (e) {
-      console.warn("Firebase fetch failed, falling back to static", e);
+      console.warn("Firebase fetch failed or timed out, gracefully falling back to GitHub static data:", e.message);
   }
 
   // Fallback to static Github payload
@@ -515,8 +520,8 @@ function initHome() {
     renderHome(results, false);
     prefetchAll();
   }).catch(err => {
-    showError(container, "Could not load match data. Please check your connection.");
-    console.error(err);
+    console.warn("Home fetch delayed, waiting for WebSocket to sync...", err.message);
+    // Do NOT show error box, keep the beautiful skeleton spinning!
   });
 
   // Live polling — re-fetch each grade every 30 s; re-render if anything changed
@@ -653,8 +658,8 @@ function initBracket() {
       });
     })
     .catch(err => {
-      showError(container, "Could not load bracket for Grade " + grade + ".");
-      console.error(err);
+      console.warn("Bracket fetch delayed, waiting for WebSocket to sync...", err.message);
+      // Do NOT show error box, let the beautiful skeleton loader keep spinning!
     });
 
   // Live polling — re-render automatically when data changes
