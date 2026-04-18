@@ -43,25 +43,48 @@
                 Please authenticate to access tournament management
             </div>
 
-            <!-- LOGIN SECTION -->
-            <!-- Dropdown is populated at runtime from credentials.js — do not add options here -->
+            <!-- LOGIN SECTION — dropdown populated from credentials.js at runtime -->
             <div id="login-section">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
                     <div class="input-group">
                         <label for="admin-name">🔐 Admin Access</label>
-                        <select id="admin-name" aria-label="Select your admin name">
+                        <select id="admin-name" aria-label="Select your admin name"
+                            onchange="KSSS_UI_HOOKS.onAdminNameChange()">
                             <option value="">-- Select Your Name --</option>
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="admin-password">🔑 Password</label>
+                        <label for="admin-password" id="password-label">🔑 Password</label>
                         <input type="password" id="admin-password" placeholder="Enter your password"
                             aria-label="Enter your admin password"
                             onkeydown="if(event.key==='Enter') KSSS_UI_HOOKS.login()">
                     </div>
                 </div>
-                <button id="login-btn" onclick="KSSS_UI_HOOKS.login()" style="margin-top: 10px;"
+
+                <!-- Token field: only shown on first login on this device -->
+                <div id="token-input-row" style="display:none; margin-top: 12px;">
+                    <div class="input-group">
+                        <label for="admin-token">🔗 GitHub Token (first time setup)</label>
+                        <input type="password" id="admin-token" placeholder="github_pat_..."
+                            aria-label="Enter GitHub personal access token">
+                    </div>
+                    <div id="setup-note" style="display:none; font-size:12px; color:var(--text-muted);
+                        padding: 10px 14px; background: var(--active-bg); border-radius: 8px;
+                        border: 1px solid var(--active-border); margin-top: 8px; line-height: 1.6;">
+                        🔒 <strong>First login on this device.</strong> Enter your GitHub token and
+                        choose a password. Your token will be encrypted and stored on this device only.
+                        You will only need your password from now on.
+                    </div>
+                </div>
+
+                <button id="login-btn" onclick="KSSS_UI_HOOKS.login()" style="margin-top: 14px;"
                     aria-label="Login to access admin control center">🚀 Access Control Center</button>
+
+                <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: center;">
+                    Token expired or forgotten password?
+                    <a href="#" onclick="KSSS_UI_HOOKS.resetCredentials(); return false;"
+                        style="color: var(--danger);">Reset credentials on this device</a>
+                </div>
             </div>
 
             <!-- GRADE SELECTION -->

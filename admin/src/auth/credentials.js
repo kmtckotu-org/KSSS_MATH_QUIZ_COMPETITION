@@ -2,57 +2,39 @@
 //
 // ── HOW TO MANAGE ADMINS ──────────────────────────────────────────────────────
 //
-// This is the ONLY file you need to edit for admin management.
+// This is the ONLY file you edit for admin management.
 //
 // TO ADD AN ADMIN:
-//   1. Open admin/tools/setup.html in your browser (locally, never online)
-//   2. Enter the new admin's name, role, GitHub token, and password
-//   3. Copy the generated entry and add it to the list below
+//   Add an entry with their name and role. That is it.
+//   They do their own first-time setup on their device (name + token + password).
 //
 // TO REMOVE AN ADMIN:
-//   Delete their entry from the list.
-//
-// TO ROTATE AN EXPIRED TOKEN:
-//   1. Generate a new GitHub token for that admin
-//   2. Open setup.html, enter their name, NEW token, and SAME password
-//   3. Replace their blob with the new one
-//
-// TO CHANGE A PASSWORD:
-//   1. Open setup.html, enter their name, SAME token, and NEW password
-//   2. Replace their blob with the new one
+//   Delete their entry. Their device credentials become useless immediately.
 //
 // TO RENAME AN ADMIN:
-//   Change the name field. The dropdown updates automatically.
+//   Change the name. They will need to do first-time setup again on their device.
 //
 // ── ROLES ─────────────────────────────────────────────────────────────────────
 //
-//   "absolute" — full structural control (cascade delete, team switch, unlock rounds)
-//                Y-JAMMEH also goes through an additional structural auth code
-//   "limited"  — can enter and save scores only
+//   "absolute" — full structural control (VP only).
+//               Y-JAMMEH also requires an additional structural auth code.
+//   "limited"  — can enter and save scores only.
 //
-// ── BLOB FORMAT ───────────────────────────────────────────────────────────────
+// ── HOW CREDENTIALS WORK ──────────────────────────────────────────────────────
 //
-//   Each blob is: base64(salt[16] + iv[12] + AES-GCM-ciphertext)
-//   Key derived with PBKDF2 SHA-256, 200,000 iterations.
-//   The same token + password produces a different blob each time — that is correct.
+//   Each admin's GitHub token is encrypted with their own password using AES-GCM
+//   and stored in localStorage on their own device.
+//
+//   First login on a new device: enter name + GitHub token + chosen password.
+//   Every login after that:      enter name + password only.
+//
+//   No tokens in files. No blobs to copy. No files to commit.
+//   Each admin manages their own device credentials independently.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ADMIN_CREDENTIALS = [
-  {
-    name: "YUSUPHA  JAMMEH",
-    role: "absolute",
-    // Run setup.html to generate this blob
-    blob: "w7WLrMUVWrft654SHBvumSWQzzCGKFNY+Xi7z+MLVRhkx/BnfxcSiGy7u6pRnsttt/mIx8bc7gEv7af1VyNohY0N8k8+EH7uAK28TyhmqP/Lb+TOPpEiz+OFW3ozDlsS4S1xFtlWgZ2jQt+upIupe7P2mq+Kco5jUaYlhdEE6a/j+o3bM0eH1AI="
-  },
-  {
-    name: "Pico Jr",
-    role: "limited",
-    blob: "REPLACE_WITH_BLOB_FROM_SETUP_TOOL"
-  },
-  {
-    name: "Coordinator",
-    role: "limited",
-    blob: "REPLACE_WITH_BLOB_FROM_SETUP_TOOL"
-  }
+  { name: "Y-JAMMEH",    role: "absolute" },
+  { name: "Pico Jr",     role: "limited"  },
+  { name: "Coordinator", role: "limited"  }
 ];

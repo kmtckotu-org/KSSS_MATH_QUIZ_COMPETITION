@@ -101,8 +101,10 @@ async function initializeApp() {
 
         // Authentication
         if (authModule.adminSecurity) {
-            hooks.login = authModule.adminSecurity.AdminSecurity.login;
-            hooks.logout = authModule.adminSecurity.AdminSecurity.logout;
+            hooks.login               = authModule.adminSecurity.AdminSecurity.login;
+            hooks.logout              = authModule.adminSecurity.AdminSecurity.logout;
+            hooks.onAdminNameChange   = authModule.adminSecurity.AdminSecurity.onAdminNameChange;
+            hooks.resetCredentials    = authModule.adminSecurity.AdminSecurity.resetCredentials;
         }
 
         // GitHub API

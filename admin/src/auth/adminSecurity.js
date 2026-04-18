@@ -16,14 +16,15 @@ import { showRoleBadge } from '../ui/theme.js';
 import { showAlertModal } from '../ui/modals.js';
 import { setButtonLoading } from '../utils/dom.js';
 
-const SALT = "ksss-secure-salt-v1";
+const SALT        = "ksss-secure-salt-v1";
+const STORAGE_KEY = (name) => `ksss_admin_cred_${name}`;
 
-let role = null;
+let role          = null;
 let isInitializing = false;
 
-// ── Crypto: decrypt a stored blob using a password ─────────────────────────
+// ── Crypto ────────────────────────────────────────────────────────────────────
 
-async function deriveKey(password, salt) {
+async function deriveKey(password, salt, usage) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
@@ -33,30 +34,87 @@ async function deriveKey(password, salt) {
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
-    ["decrypt"]
+    [usage]
   );
 }
 
-/**
- * Decrypt a base64 blob using the given password.
- * Returns the plain-text token, or null if the password is wrong.
- */
+async function encryptToken(token, password) {
+  const enc   = new TextEncoder();
+  const salt  = crypto.getRandomValues(new Uint8Array(16));
+  const iv    = crypto.getRandomValues(new Uint8Array(12));
+  const key   = await deriveKey(password, salt, "encrypt");
+  const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(token));
+  const packed = new Uint8Array(16 + 12 + cipher.byteLength);
+  packed.set(salt, 0);
+  packed.set(iv, 16);
+  packed.set(new Uint8Array(cipher), 28);
+  return btoa(String.fromCharCode(...packed));
+}
+
 async function decryptBlob(blob, password) {
   try {
     const raw  = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
     const salt = raw.slice(0, 16);
     const iv   = raw.slice(16, 28);
     const data = raw.slice(28);
-    const key  = await deriveKey(password, salt);
+    const key  = await deriveKey(password, salt, "decrypt");
     const dec  = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
     return new TextDecoder().decode(dec);
   } catch {
-    // Decryption failure = wrong password or corrupted blob
-    return null;
+    return null; // wrong password or corrupted
   }
 }
 
-// ── Role signing (tamper-proof session) ───────────────────────────────────
+// ── Device credential storage ─────────────────────────────────────────────────
+
+function getStoredBlob(name) {
+  try { return localStorage.getItem(STORAGE_KEY(name)) || null; }
+  catch { return null; }
+}
+
+function saveBlob(name, blob) {
+  try { localStorage.setItem(STORAGE_KEY(name), blob); }
+  catch { /* ignore */ }
+}
+
+function clearBlob(name) {
+  try { localStorage.removeItem(STORAGE_KEY(name)); }
+  catch { /* ignore */ }
+}
+
+/** Returns true if this admin has completed first-time setup on this device */
+export function isSetupComplete(name) {
+  return !!getStoredBlob(name);
+}
+
+// ── Login UI state management ─────────────────────────────────────────────────
+
+/**
+ * Called by index.js when the admin name dropdown changes.
+ * Shows/hides the token field based on whether setup is complete.
+ */
+export function onAdminNameChange() {
+  const name        = document.getElementById("admin-name")?.value;
+  const tokenRow    = document.getElementById("token-input-row");
+  const setupNote   = document.getElementById("setup-note");
+  const passwordLbl = document.getElementById("password-label");
+
+  if (!name) {
+    if (tokenRow)  tokenRow.style.display  = "none";
+    if (setupNote) setupNote.style.display = "none";
+    return;
+  }
+
+  const needsSetup = !isSetupComplete(name);
+
+  if (tokenRow)    tokenRow.style.display  = needsSetup ? "block" : "none";
+  if (setupNote)   setupNote.style.display = needsSetup ? "block" : "none";
+  if (passwordLbl) passwordLbl.textContent = needsSetup
+    ? "🔑 Choose a Password"
+    : "🔑 Password";
+}
+
+// ── Role signing ──────────────────────────────────────────────────────────────
 
 async function signRole(roleValue) {
   if (!roleValue) return null;
@@ -66,19 +124,11 @@ async function signRole(roleValue) {
 }
 
 async function verifyRole(storedObj) {
-  if (!storedObj?.role || !storedObj?.nonce || !storedObj?.hash) {
-    if (CONFIG.debug) console.warn("🔒 Security Alert: Invalid role structure");
-    return null;
-  }
+  if (!storedObj?.role || !storedObj?.nonce || !storedObj?.hash) return null;
   const ALLOWED = [ROLE_ABSOLUTE, ROLE_LIMITED];
-  if (!ALLOWED.includes(storedObj.role)) {
-    console.warn(`🔒 Security Alert: Unrecognized role '${storedObj.role}' rejected`);
-    return null;
-  }
+  if (!ALLOWED.includes(storedObj.role)) return null;
   const computed = await hashString(storedObj.role + SALT + storedObj.nonce);
-  if (computed === storedObj.hash) return storedObj.role;
-  console.warn("🔒 Security Alert: Admin Role Tampered. Clearing session.");
-  return null;
+  return computed === storedObj.hash ? storedObj.role : null;
 }
 
 async function setRole(newRole) {
@@ -97,7 +147,6 @@ function finishLogin(token) {
   const currentUser = store.getCurrentUser();
   setAdminUser(currentUser);
   setGithubToken(token);
-
   document.getElementById("login-section").classList.add("hidden");
   document.getElementById("grade-section").classList.remove("hidden");
   document.getElementById("admin-display").innerHTML =
@@ -108,7 +157,7 @@ function finishLogin(token) {
   showRoleBadge();
 }
 
-// ── Public API ────────────────────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export const AdminSecurity = (() => {
 
@@ -118,10 +167,11 @@ export const AdminSecurity = (() => {
     setButtonLoading(btn, true);
 
     try {
-      const userName = document.getElementById("admin-name").value;
-      const password = document.getElementById("admin-password").value;
+      const name     = document.getElementById("admin-name")?.value;
+      const password = document.getElementById("admin-password")?.value;
+      const tokenRaw = document.getElementById("admin-token")?.value?.trim();
 
-      if (!userName) {
+      if (!name) {
         await showAlertModal("Missing Information", "Please select your name.");
         return;
       }
@@ -130,58 +180,87 @@ export const AdminSecurity = (() => {
         return;
       }
 
-      // Find the credential entry for this admin
-      const cred = ADMIN_CREDENTIALS.find(c => c.name === userName);
+      // Find role for this admin
+      const cred = ADMIN_CREDENTIALS.find(c => c.name === name);
       if (!cred) {
-        await showAlertModal("Access Denied", "Admin not found.");
+        await showAlertModal("Access Denied", "Admin not found. Contact the VP.");
         return;
       }
 
-      if (cred.blob === "REPLACE_WITH_BLOB_FROM_SETUP_TOOL") {
-        await showAlertModal(
-          "Setup Required",
-          `No credential blob found for ${userName}.\n\n` +
-          `Run admin/tools/setup.html to generate one, then update credentials.js.`
-        );
-        return;
+      let token;
+      const needsSetup = !isSetupComplete(name);
+
+      if (needsSetup) {
+        // ── FIRST-TIME SETUP ─────────────────────────────────────────────────
+        if (!tokenRaw) {
+          await showAlertModal("Token Required",
+            "This is your first login on this device.\nPlease enter your GitHub token to set up your credentials.");
+          return;
+        }
+        if (password.length < 8) {
+          await showAlertModal("Weak Password", "Choose a password with at least 8 characters.");
+          return;
+        }
+
+        // Validate the token first
+        const valid = await validateGithubToken(tokenRaw);
+        if (!valid) {
+          await showAlertModal("Invalid Token",
+            "The GitHub token you entered is invalid or expired.\nPlease generate a new one.");
+          return;
+        }
+
+        // Encrypt and save to localStorage on this device
+        const blob = await encryptToken(tokenRaw, password);
+        saveBlob(name, blob);
+        token = tokenRaw;
+
+        // Hide the token field for future logins
+        const tokenRow  = document.getElementById("token-input-row");
+        const setupNote = document.getElementById("setup-note");
+        if (tokenRow)  tokenRow.style.display  = "none";
+        if (setupNote) setupNote.style.display = "none";
+
+      } else {
+        // ── NORMAL LOGIN ─────────────────────────────────────────────────────
+        const blob = getStoredBlob(name);
+        token = await decryptBlob(blob, password);
+
+        if (!token) {
+          await showAlertModal("Access Denied",
+            "Incorrect password.\n\nIf you forgot your password or your token has expired, " +
+            "click \"Reset Credentials\" to set up again.");
+          return;
+        }
+
+        // Validate that the stored token is still active
+        const valid = await validateGithubToken(token);
+        if (!valid) {
+          // Token expired — clear the blob and force re-setup
+          clearBlob(name);
+          onAdminNameChange();
+          await showAlertModal("Token Expired",
+            "Your stored GitHub token has expired.\n\n" +
+            "Please generate a new token and complete the setup again.\n" +
+            "The token field will now appear.");
+          return;
+        }
       }
 
-      // Decrypt the stored token using the entered password
-      const token = await decryptBlob(cred.blob, password);
-      if (!token) {
-        await showAlertModal("Access Denied", "Incorrect password. Please try again.");
-        return;
-      }
+      store.setCurrentUser(name, 'adminSecurity.login');
 
-      // Validate the decrypted token against GitHub
-      const tokenValid = await validateGithubToken(token);
-      if (!tokenValid) {
-        await showAlertModal(
-          "Token Expired",
-          `The stored token for ${userName} is no longer valid.\n\n` +
-          `The token may have expired. Ask ${userName} to:\n` +
-          `1. Generate a new GitHub token\n` +
-          `2. Run setup.html with the new token\n` +
-          `3. Update their blob in credentials.js`
-        );
-        return;
-      }
-
-      store.setCurrentUser(userName, 'adminSecurity.login');
-
-      // Y-JAMMEH requires an additional structural auth code
+      // Absolute admin requires structural auth code in addition
       if (cred.role === ROLE_ABSOLUTE) {
         try {
-          const code = await showAuthModal();
+          const code         = await showAuthModal();
           const expectedHash = "45888f0c28b9e1007b74238f0dd90312efe9b3c4298957c80079845ed7725384";
-          const codeHash = await hashString(code);
+          const codeHash     = await hashString(code);
           if (codeHash !== expectedHash) {
             await showAlertModal("Access Denied", "Incorrect structural authentication code.");
             return;
           }
         } catch {
-          // User cancelled the modal
-          return;
+          return; // user cancelled
         }
       }
 
@@ -205,9 +284,16 @@ export const AdminSecurity = (() => {
     window.location.reload();
   }
 
+  /** Called from the "Reset Credentials" link — clears stored blob for this admin */
+  function resetCredentials() {
+    const name = document.getElementById("admin-name")?.value;
+    if (!name) return;
+    clearBlob(name);
+    onAdminNameChange();
+  }
+
   async function verifySession() {
     isInitializing = true;
-
     const token = getGithubToken();
     if (!token) {
       await setRole(null);
@@ -215,7 +301,6 @@ export const AdminSecurity = (() => {
       showLoginModal();
       return;
     }
-
     const storedRole = getSecureAdminRole();
     if (!storedRole) {
       await setRole(null);
@@ -223,7 +308,6 @@ export const AdminSecurity = (() => {
       showLoginModal();
       return;
     }
-
     try {
       const storedObj    = JSON.parse(storedRole);
       const roleVerified = await verifyRole(storedObj);
@@ -236,13 +320,11 @@ export const AdminSecurity = (() => {
       role = roleVerified;
       store.setCurrentAdminRole(role, 'adminSecurity.verifySession');
     } catch (e) {
-      console.error("🔒 Role parse error", e);
       await setRole(null);
       isInitializing = false;
       showLoginModal();
       return;
     }
-
     showRoleBadge();
     await loadMatches();
     freezeCriticalFunctions();
@@ -255,13 +337,9 @@ export const AdminSecurity = (() => {
     const storedRole = getSecureAdminRole();
     if (!storedRole && role !== null) return false;
     try {
-      const storedObj     = JSON.parse(storedRole);
-      const verifiedRole  = await verifyRole(storedObj);
-      if (!verifiedRole || verifiedRole !== role) {
-        if (CONFIG.debug) console.warn("🔒 Integrity Check: Session signature invalid");
-        return false;
-      }
-      return true;
+      const storedObj    = JSON.parse(storedRole);
+      const verifiedRole = await verifyRole(storedObj);
+      return !!(verifiedRole && verifiedRole === role);
     } catch {
       return false;
     }
@@ -270,10 +348,12 @@ export const AdminSecurity = (() => {
   return Object.freeze({
     login,
     logout,
+    resetCredentials,
     verifySession,
     validateSession,
-    getRole:         () => role,
-    isInitializing:  () => isInitializing,
-    isAuthenticated: () => role !== null
+    onAdminNameChange,
+    getRole:          () => role,
+    isInitializing:   () => isInitializing,
+    isAuthenticated:  () => role !== null
   });
 })();
