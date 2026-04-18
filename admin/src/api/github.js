@@ -64,12 +64,17 @@ async function fetchWithRetry(url, options = {}, maxRetries = CONSTANTS.MAX_RETR
                         errorMessage = "Authentication failed. Please check your GitHub token.";
                         break;
                     case CONSTANTS.HTTP_FORBIDDEN: {
-                        // Log the actual GitHub error for diagnosis
-                        if (CONFIG.debug) console.error("GitHub 403 body:", errorText);
-                        const isSso = errorText.includes("organization") || errorText.includes("SSO") || errorText.includes("SAML");
+                        // Always log the raw GitHub error body — open DevTools console to see it
+                        console.error("[KSSS] GitHub 403 — Full error:", errorText);
+                        let ghMessage = "";
+                        try { ghMessage = JSON.parse(errorText)?.message || ""; } catch { /* ignore */ }
+                        const isSso = errorText.includes("SAML") || errorText.includes("SSO") || ghMessage.includes("organization");
+                        const isBranchProtect = ghMessage.includes("protected") || ghMessage.includes("Required") || ghMessage.includes("admin rights");
                         errorMessage = isSso
-                            ? "Access forbidden: your token needs SSO authorization for the KMTC-org organization. Visit github.com/settings/tokens to authorize it."
-                            : "Access forbidden. Token may have expired or lacks write permission to this repository.";
+                            ? `SSO required: ${ghMessage || "authorize your token for KMTC-org at github.com/settings/tokens."}`
+                            : isBranchProtect
+                                ? `Branch protection blocked the save: ${ghMessage}`
+                                : `Access forbidden${ghMessage ? ": " + ghMessage : ". Token may have expired or lacks write permission."}`;
                         break;
                     }
                     case CONSTANTS.HTTP_NOT_FOUND:
@@ -164,7 +169,7 @@ export async function loadMatches(forceRefresh = false) {
         showStatus(forceRefresh ? "Refreshing from GitHub..." : "Connecting to GitHub...", "#3b82f6");
         const fetchUrl = forceRefresh ? `${url}?t=${Date.now()}` : url;
         const res = await fetchWithRetry(fetchUrl, {
-            headers: { Authorization: `token ${token}` }
+            headers: { Authorization: `token ${token.trim()}` }
         });
         const json = await res.json();
         store.setCurrentSha(json.sha, 'github.loadMatches');
@@ -212,7 +217,7 @@ export async function saveToGitHub() {
             {
                 method: "PUT",
                 headers: {
-                    Authorization: `token ${token}`,
+                    Authorization: `token ${token.trim()}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
