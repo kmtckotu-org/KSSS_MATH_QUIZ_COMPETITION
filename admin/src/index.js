@@ -168,7 +168,7 @@ async function initializeApp() {
         }
 
         if (tournamentModule.bestLoser) {
-            hooks.createBestLoserMatch = tournamentModule.bestLoser.createBestLoserMatch;
+            hooks.overrideBestLoserSave = tournamentModule.bestLoser.overrideBestLoserSave;
         }
 
         if (tournamentModule.generation) {
@@ -182,7 +182,7 @@ async function initializeApp() {
             hooks.closeRoundGenModal = uiModule.modals.closeRoundGenModal;
             hooks.showStructuralActionLog = uiModule.modals.showStructuralActionLog;
             hooks.closeStructuralLogModal = uiModule.modals.closeStructuralLogModal;
-            hooks.showBestLoserCreator = uiModule.modals.showBestLoserCreator;
+            hooks.showBestLoserOverride = uiModule.modals.showBestLoserOverride;
             hooks.closeBestLoserModal = uiModule.modals.closeBestLoserModal;
             hooks.showStructuralAuthModal = uiModule.modals.showStructuralAuthModal;
         }

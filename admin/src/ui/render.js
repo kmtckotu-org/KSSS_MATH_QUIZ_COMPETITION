@@ -1,7 +1,7 @@
 import { store } from '../core/store.js';
 import { createEl } from '../utils/dom.js';
 import { getMatchStatus } from '../tournament/matches.js';
-import { isRoundComplete, getQualifiedTeams, hasBestLoserMatch, canGenerateNextRound } from '../tournament/rounds.js';
+import { isRoundComplete, getQualifiedTeams, hasBestLoserMatch, canGenerateNextRound, getAutoPromotedLoser } from '../tournament/rounds.js';
 import { AdminSecurity } from '../auth/adminSecurity.js';
 import { ROLE_ABSOLUTE } from '../auth/roles.js';
 import { populateRoundFilter } from './filters.js';
@@ -97,6 +97,7 @@ export function createMatchCard(m, rIdx, mIdx, isLocked) {
         inputA.ariaLabel = `Score for ${m.teamA.name}`;
         if (switchModeThisRound) inputA.disabled = true;
         inputA.oninput = (e) => updateScores(rIdx, mIdx, 'teamA', e.target.value);
+        inputA.addEventListener('wheel', function(e) { this.blur(); });
         colA.appendChild(inputA);
         scoreRow.appendChild(colA);
 
@@ -126,6 +127,7 @@ export function createMatchCard(m, rIdx, mIdx, isLocked) {
         inputB.ariaLabel = `Score for ${m.teamB.name}`;
         if (switchModeThisRound) inputB.disabled = true;
         inputB.oninput = (e) => updateScores(rIdx, mIdx, 'teamB', e.target.value);
+        inputB.addEventListener('wheel', function(e) { this.blur(); });
         colB.appendChild(inputB);
         scoreRow.appendChild(colB);
         card.appendChild(scoreRow);
@@ -248,7 +250,7 @@ function addRoundManagementControls(container, round, rIdx) {
 
     const roundComplete = isRoundComplete(round);
     const qualified = getQualifiedTeams(round);
-    const hasOddTeams = qualified.length % 2 !== 0;
+    const autoPromoted = getAutoPromotedLoser(round);
     const hasBestLoser = hasBestLoserMatch(round);
 
     const header = createEl("div", "", "📋 Round Management (v2.2.5)", "font-weight: bold; font-size: 18px; margin-bottom: 15px; color: var(--primary);");
@@ -257,18 +259,20 @@ function addRoundManagementControls(container, round, rIdx) {
     const completedMatches = round.matches.filter(m => m.winner).length;
     const infoDiv = createEl("div", "", null, "margin-bottom: 15px; font-size: 14px;");
     const info1 = createEl("div", "", `✅ Completed Matches: ${completedMatches} / ${round.matches.length}`);
-    const info2 = createEl("div", "", `🏆 Qualified Teams: ${qualified.length}${hasOddTeams ? ' (ODD - Need Best Loser!)' : ' (EVEN)'}`);
+    const info2 = createEl("div", "", `🏆 Qualified Teams: ${qualified.length}${autoPromoted ? ' (Including Best Loser: ' + autoPromoted + ')' : ''}`);
     infoDiv.appendChild(info1);
     infoDiv.appendChild(info2);
     controlsDiv.appendChild(infoDiv);
 
-    if (roundComplete && qualified.length >= 3 && qualified.length % 2 !== 0 && !hasBestLoser) {
-        const blBtn = createEl("button", "", "🏆 Create Best Loser Playoff", "margin-bottom: 10px; background: #f59e0b; width:100%; padding:10px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;");
-        blBtn.dataset.action = "showBestLoserCreator";
-        blBtn.dataset.params = JSON.stringify([rIdx]);
-        controlsDiv.appendChild(blBtn);
-    } else if (hasBestLoser) {
-        const blStatus = createEl("div", "", "✅ Best Loser Playoff exists", "padding: 10px; background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); border-radius: 6px; margin-bottom: 10px;");
+    if (autoPromoted && AdminSecurity.getRole() === ROLE_ABSOLUTE) {
+        const overrideBtn = createEl("button", "", "🔄 Override Best Loser", "margin-bottom: 10px; background: #64748b; width:100%; padding:10px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;");
+        overrideBtn.dataset.action = "showBestLoserOverride";
+        overrideBtn.dataset.params = JSON.stringify([rIdx]);
+        controlsDiv.appendChild(overrideBtn);
+    }
+
+    if (hasBestLoser) {
+        const blStatus = createEl("div", "", "✅ Best Loser Playoff exists natively", "padding: 10px; background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); border-radius: 6px; margin-bottom: 10px;");
         controlsDiv.appendChild(blStatus);
     }
 

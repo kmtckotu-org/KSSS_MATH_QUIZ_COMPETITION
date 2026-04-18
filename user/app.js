@@ -16,8 +16,8 @@ const SURVEY_KEY      = "ksss_survey_done";
 const THEME_KEY       = "ksss-user-theme";
 const POLL_INTERVAL   = 30_000;              // poll every 30 seconds for live changes
 
-// Replace with your actual Netlify function URL after deploying
-const SURVEY_ENDPOINT = "/.netlify/functions/survey-function";
+// Hardcoded absolute URL for GitHub Pages compatibility crossing over to the Netlify Backend!
+const SURVEY_ENDPOINT = "https://ksss-math-quiz-competition.netlify.app/.netlify/functions/survey-function";
 
 // ── Survey Questions ─────────────────────────────────────────
 const QUESTIONS = [
@@ -113,7 +113,9 @@ function setupThemeToggle() {
 
 // ── Date Parsing ─────────────────────────────────────────────
 function cleanTime(t) {
-  return t ? t.replace(/\s*\([^)]*\)/g, "").trim() : "";
+  if (!t) return "";
+  const m = String(t).match(/\d{1,2}:\d{2}\s*(?:am|pm)?/i);
+  return m ? m[0] : String(t).replace(/\s*\([^)]*\)/g, "").trim();
 }
 
 function isPending(schedule) {
@@ -226,56 +228,76 @@ function matchCardHTML(m, opts) {
     </div>`;
 }
 
-// ── JSON Fetch with in-memory cache (stale-while-revalidate) ────────────
-// Each cache entry: { data: object, raw: string }
+// ── Firebase Realtime Sync ─────────────────────────────────────
+let _firebaseDB = null;
+async function initFirebaseDB() {
+  if (_firebaseDB) return _firebaseDB;
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js");
+  const { getDatabase } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js");
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1Hc92r0dd50H71vahVeCZdUPqLaY-XSc",
+    authDomain: "ksss-math-quiz.firebaseapp.com",
+    projectId: "ksss-math-quiz",
+    storageBucket: "ksss-math-quiz.firebasestorage.app",
+    messagingSenderId: "858027895493",
+    appId: "1:858027895493:web:bf5e08232f466cbeeddeac",
+    databaseURL: "https://ksss-math-quiz-default-rtdb.firebaseio.com"
+  };
+  const app = initializeApp(firebaseConfig);
+  _firebaseDB = getDatabase(app);
+  return _firebaseDB;
+}
+
 const _jsonCache = new Map();
 
-async function fetchJSON(url) {
-  const key = url + "?v=" + VERSION;
-  // Return cached data instantly if already fetched
-  if (_jsonCache.has(key)) return _jsonCache.get(key).data;
+async function fetchJSON(gradeUrl) {
+  // Graceful fallback to static JSON if Firebase errors, mostly used for initial bootstrap
+  const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js");
+  const db = await initFirebaseDB();
+  const gradeStr = gradeUrl.match(/grade(\d+)/)?.[1] || "10";
+  
+  try {
+      const snapshot = await get(ref(db, `competition/grade${gradeStr}`));
+      if (snapshot.exists()) return snapshot.val();
+  } catch (e) {
+      console.warn("Firebase fetch failed, falling back to static", e);
+  }
 
-  const res = await fetch(key, { cache: "default" });
+  // Fallback to static Github payload
+  const res = await fetch(`https://raw.githubusercontent.com/KMTC-org/KSSS_MATH_QUIZ_COMPETITION-now/main/${gradeUrl}?t=${Date.now()}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  _jsonCache.set(key, { data, raw: JSON.stringify(data) });
-  return data;
+  return await res.json();
 }
 
 /**
- * Poll a URL every POLL_INTERVAL ms.
- * Uses `cache: "no-cache"` so the server always sends the latest file.
- * Calls onUpdate(newData) only when the content has actually changed.
- * Returns the interval ID so the caller can stop it.
+ * Listens to Realtime Database instead of HTTP polling.
  */
-function pollForChanges(url, onUpdate) {
-  const key = url + "?v=" + VERSION;
-
-  async function check() {
-    try {
-      const res = await fetch(key, { cache: "no-cache" });
-      if (!res.ok) return;
-      const data = await res.json();
-      const raw  = JSON.stringify(data);
-      const cached = _jsonCache.get(key);
-      // Only update if data actually changed
+async function pollForChanges(gradeUrl, onUpdate) {
+  const { ref, onValue } = await import("https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js");
+  const db = await initFirebaseDB();
+  const gradeStr = gradeUrl.match(/grade(\d+)/)?.[1] || "10";
+  
+  const dbRef = ref(db, `competition/grade${gradeStr}`);
+  
+  const unsubscribe = onValue(dbRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const raw = JSON.stringify(data);
+      const cached = _jsonCache.get(gradeStr);
       if (!cached || cached.raw !== raw) {
-        _jsonCache.set(key, { data, raw });
-        onUpdate(data);
+        _jsonCache.set(gradeStr, { data, raw });
+        // Optional slight delay so UI isn't jarring on fast keystrokes
+        setTimeout(() => onUpdate(data), 150);
       }
-    } catch (_) {
-      // Silently ignore network errors during polling
     }
-  }
-
-  return setInterval(check, POLL_INTERVAL);
+  });
+  
+  return unsubscribe;
 }
 
-/** Silently pre-fetch all grade JSON files in the background. */
 function prefetchAll() {
-  ["10", "11", "12"].forEach(g => {
-    fetchJSON(DATA_PATH + "competition-grade" + g + ".json").catch(() => {});
-  });
+  initFirebaseDB(); // Just warm up the connection silently
 }
 
 // ── Toast notification ────────────────────────────────────────────

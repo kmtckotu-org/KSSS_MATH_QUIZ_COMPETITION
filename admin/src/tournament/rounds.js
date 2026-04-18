@@ -21,7 +21,33 @@ export function getQualifiedTeams(round) {
     round.matches.forEach(m => {
         if (m.winner) winners.push(m.winner);
     });
+    
+    if (winners.length > 0 && winners.length % 2 !== 0 && isRoundComplete(round) && !hasBestLoserMatch(round)) {
+        if (round.overrideBestLoser) {
+            winners.push(round.overrideBestLoser);
+        } else {
+            const losers = getLosersSorted(round);
+            if (losers.length > 0) {
+                winners.push(losers[0].name);
+            }
+        }
+    }
+    
     return winners;
+}
+
+export function getAutoPromotedLoser(round) {
+    if (!round || !round.matches || !isRoundComplete(round) || hasBestLoserMatch(round)) return null;
+    const winners = [];
+    round.matches.forEach(m => {
+        if (m.winner) winners.push(m.winner);
+    });
+    if (winners.length > 0 && winners.length % 2 !== 0) {
+        if (round.overrideBestLoser) return round.overrideBestLoser;
+        const losers = getLosersSorted(round);
+        if (losers.length > 0) return losers[0].name;
+    }
+    return null;
 }
 
 export function getLosersSorted(round) {
@@ -57,10 +83,7 @@ export function canGenerateNextRound() {
     if (!lastRound) return false;
     if (!isRoundComplete(lastRound)) return false;
     const qualified = getQualifiedTeams(lastRound);
-    if (qualified.length % 2 !== 0) {
-        if (!hasBestLoserMatch(lastRound)) return false;
-    }
-    return true;
+    return qualified.length >= 2 && qualified.length % 2 === 0;
 }
 
 /**

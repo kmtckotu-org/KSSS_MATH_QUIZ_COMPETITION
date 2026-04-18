@@ -124,15 +124,13 @@ export function cancelTeamSwap() {
     renderForm();
 }
 
-export function showBestLoserCreator(rIdx) {
-    console.log('showBestLoserCreator called with rIdx:', rIdx);
+export function showBestLoserOverride(rIdx) {
     const currentData = store.getCurrentData();
     const round = currentData.rounds[rIdx];
     const losers = getLosersSorted(round);
-    console.log('Losers:', losers);
 
-    if (losers.length < 2) {
-        alert("Not enough losers to create a Best Loser playoff.");
+    if (losers.length < 1) {
+        alert("No losers available to pick from in this round.");
         return;
     }
     const backdrop = document.createElement("div");
@@ -148,53 +146,30 @@ export function showBestLoserCreator(rIdx) {
 
     let html = `
         <div class="modal-header">
-            <h3 class="modal-title">🏆 Create Best Loser Playoff</h3>
-            <p class="modal-subtitle">Select 2 teams from losers. The winner will qualify for the next round.</p>
+            <h3 class="modal-title">🔄 Override Automatic Best Loser</h3>
+            <p class="modal-subtitle">The system automatically promoted the highest-scoring loser. You can manually select a different team to advance instead.</p>
         </div>
         <div class="modal-body">
             <div class="input-group">
-                <label>Best Loser A:</label>
-                <select id="loser-a" class="modal-select">
-                    <option value="">-- Select Team --</option>
-                    ${losers.map(l => `<option value="${l.name}">${l.name} (${l.points} pts)</option>`).join('')}
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Best Loser B:</label>
-                <select id="loser-b" class="modal-select">
-                    <option value="">-- Select Team --</option>
+                <label>Select Team to Advance:</label>
+                <select id="loser-override" class="modal-select">
+                    <option value="">-- Choose Team --</option>
                     ${losers.map(l => `<option value="${l.name}">${l.name} (${l.points} pts)</option>`).join('')}
                 </select>
             </div>
         </div>
         <div class="modal-footer">
-            <button data-action="createBestLoserMatch" data-params="[${rIdx}]" style="background: var(--success);">✅ Create Match</button>
+            <button data-action="overrideBestLoserSave" data-params="[${rIdx}]" style="background: var(--success);">✅ Save Override</button>
             <button data-action="closeBestLoserModal" style="background: var(--danger);">❌ Cancel</button>
         </div>
     `;
     modal.innerHTML = html;
     document.body.appendChild(backdrop);
     document.body.appendChild(modal);
-    console.log('Modal appended to body');
     initIOSHandling();
-    document.getElementById("loser-a").onchange = updateLoserDropdowns;
-    document.getElementById("loser-b").onchange = updateLoserDropdowns;
-    console.log('Event handlers attached');
 }
 
-function updateLoserDropdowns() {
-    const selectA = document.getElementById("loser-a");
-    const selectB = document.getElementById("loser-b");
-    if (!selectA || !selectB) return;
-    const valueA = selectA.value;
-    const valueB = selectB.value;
-    Array.from(selectB.options).forEach(opt => {
-        opt.disabled = opt.value === valueA && opt.value !== "";
-    });
-    Array.from(selectA.options).forEach(opt => {
-        opt.disabled = opt.value === valueB && opt.value !== "";
-    });
-}
+
 
 export function closeBestLoserModal() {
     teardownIOSHandling();
