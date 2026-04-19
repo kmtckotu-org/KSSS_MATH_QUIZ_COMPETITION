@@ -39,6 +39,8 @@ function getDB() {
     return _dbInstance;
 }
 
+export const getDatabase = getDB;
+
 export async function validateGithubToken(token) {
     // We retain this function to validate the auth code for Login UX consistency!
     try {

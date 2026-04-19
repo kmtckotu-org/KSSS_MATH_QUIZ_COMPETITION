@@ -205,6 +205,37 @@ async function initializeApp() {
             });
         }
 
+        // Expose dropdown refresh functionality globally
+        window.__refreshAdminDropdown = async () => {
+            if (!apiModule.github || !apiModule.github.getDatabase) return;
+            const rtdb = apiModule.github.getDatabase();
+            const sel = document.getElementById('admin-name');
+            if (!sel) return;
+            
+            sel.innerHTML = '<option value="">-- Select Your Name --</option>';
+            try {
+                const snapshot = await rtdb.ref('admins').once('value');
+                const admins = snapshot.val() || {};
+                
+                Object.keys(admins).forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    sel.appendChild(opt);
+                });
+            } catch (err) {
+                console.warn("Failed to fetch admin registry from RTDB", err);
+            }
+            
+            const ftOpt = document.createElement('option');
+            ftOpt.value = '__first_time__';
+            ftOpt.textContent = '➕ First login on this device';
+            sel.appendChild(ftOpt);
+        };
+
+        // Populate dropdown immediately
+        window.__refreshAdminDropdown();
+
         console.log("✅ KSSS_UI_HOOKS ready", Object.keys(hooks));
     } catch (error) {
         ErrorHandler.captureError(error, 'bootstrap');

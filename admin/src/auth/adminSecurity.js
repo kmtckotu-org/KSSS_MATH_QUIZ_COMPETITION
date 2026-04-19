@@ -6,7 +6,7 @@ import {
   getGithubToken, setGithubToken, setAdminUser,
   getSecureAdminRole, setSecureAdminRole, clearSession
 } from './session.js';
-import { loadMatches, validateGithubToken } from '../api/github.js';
+import { loadMatches, validateGithubToken, getDatabase } from '../api/github.js';
 import { freezeCriticalFunctions } from '../utils/security.js';
 import { showLoginModal } from '../ui/render.js';
 import { showRoleBadge } from '../ui/theme.js';
@@ -25,38 +25,20 @@ const ABSOLUTE_CODE_HASH = "45888f0c28b9e1007b74238f0dd90312efe9b3c4298957c80079
 let role           = null;
 let isInitializing = false;
 
-// ── Device registry ───────────────────────────────────────────────────────────
-// Tracks which admin names have been registered on this device (persists
-// through credential resets so the name stays in the dropdown).
+// ── Device registry & Role hints ───────────────────────────────────────────────
+// We no longer use localStorage for registry. Everything lives in RTDB.
 
-function getRegistry() {
-  try { return JSON.parse(localStorage.getItem(REGISTRY_KEY) || "[]"); }
-  catch { return []; }
+function getAdminsRef() {
+  const db = getDatabase();
+  return db.ref('admins');
 }
 
-function addToRegistry(name) {
-  const reg = getRegistry();
-  if (!reg.includes(name)) {
-    reg.push(name);
-    localStorage.setItem(REGISTRY_KEY, JSON.stringify(reg));
-  }
-}
-
-/** Exported so index.js can populate the dropdown on load */
-export function getRegisteredAdmins() {
-  return getRegistry();
-}
-
-// ── Role hints ────────────────────────────────────────────────────────────────
-// The role is stored unencrypted alongside the blob so the UI knows whether
-// to show the structural code field without decrypting first.
-
-function saveRoleHint(name, roleValue) {
-  localStorage.setItem(ROLE_HINT_KEY(name), roleValue);
-}
-
-function getRoleHint(name) {
-  return localStorage.getItem(ROLE_HINT_KEY(name)) || null;
+async function getRoleHint(name) {
+  try {
+    const snapshot = await getAdminsRef().child(name).once('value');
+    const data = snapshot.val();
+    return data?.roleHint || null;
+  } catch { return null; }
 }
 
 // ── Crypto ────────────────────────────────────────────────────────────────────
@@ -120,38 +102,39 @@ async function decryptBlob(blob, password) {
 
 // ── Blob storage ──────────────────────────────────────────────────────────────
 
-function getStoredBlob(name) {
-  try { return localStorage.getItem(STORAGE_KEY(name)) || null; }
-  catch { return null; }
+async function getStoredBlob(name) {
+  try {
+    const snapshot = await getAdminsRef().child(name).once('value');
+    const data = snapshot.val();
+    return data?.encryptedBlob || null;
+  } catch { return null; }
 }
 
-function saveBlob(name, blob) {
-  try { localStorage.setItem(STORAGE_KEY(name), blob); }
-  catch { /* ignore */ }
+async function saveBlob(name, blob, roleHint) {
+  try {
+    await getAdminsRef().child(name).set({
+      encryptedBlob: blob,
+      roleHint: roleHint
+    });
+  } catch (e) { console.error("Failed to save blob to RTDB", e); }
 }
 
-function clearBlob(name) {
-  try { localStorage.removeItem(STORAGE_KEY(name)); }
-  catch { /* ignore */ }
+async function clearBlob(name) {
+  try { await getAdminsRef().child(name).child('encryptedBlob').remove(); }
+  catch (e) { console.error("Failed to clear blob", e); }
 }
 
-export function isSetupComplete(name) {
-  return !!getStoredBlob(name);
+export async function isSetupComplete(name) {
+  return !!(await getStoredBlob(name));
 }
 
 // ── Login mode ────────────────────────────────────────────────────────────────
-// Determines what set of fields to show based on dropdown selection.
-//
-//   "none"       — nothing selected
-//   "first_time" — "➕ First login" option chosen
-//   "returning"  — known name with a valid blob
-//   "reset"      — known name but blob was cleared (needs re-setup)
 
-function getLoginMode() {
+async function getLoginMode() {
   const nameValue = el("admin-name")?.value;
   if (!nameValue)                        return "none";
   if (nameValue === "__first_time__")    return "first_time";
-  if (isSetupComplete(nameValue))        return "returning";
+  if (await isSetupComplete(nameValue))  return "returning";
   return "reset";
 }
 
@@ -168,8 +151,8 @@ function setVisible(id, visible) {
  * Called when the admin name dropdown changes.
  * Adjusts visible fields based on the login mode.
  */
-export function onAdminNameChange() {
-  const mode      = getLoginMode();
+export async function onAdminNameChange() {
+  const mode      = await getLoginMode();
   const nameValue = el("admin-name")?.value;
 
   // Always reset to a clean state first
@@ -201,7 +184,8 @@ export function onAdminNameChange() {
     setVisible("setup-note",      true);
     if (pwdLabel) pwdLabel.textContent = "🔑 Choose a New Password";
     // Show code field if this admin previously claimed absolute role
-    if (getRoleHint(nameValue) === ROLE_ABSOLUTE) {
+    const hint = await getRoleHint(nameValue);
+    if (hint === ROLE_ABSOLUTE) {
       setVisible("code-input-row", true);
     }
     return;
@@ -294,7 +278,7 @@ export const AdminSecurity = (() => {
     setButtonLoading(btn, true);
 
     try {
-      const mode     = getLoginMode();
+      const mode     = await getLoginMode();
       const password = el("admin-password")?.value;
 
       if (mode === "none") {
@@ -317,9 +301,9 @@ export const AdminSecurity = (() => {
           await showAlertModal("Missing Information", "Please enter your name.");
           return;
         }
-        if (getRegistry().includes(name)) {
+        if (await isSetupComplete(name)) {
           await showAlertModal("Already Registered",
-            `"${name}" is already set up on this device.\nSelect your name from the dropdown instead.`);
+            `"${name}" is already set up.\nSelect your name from the dropdown instead.`);
           return;
         }
         if (!tokenRaw) {
@@ -371,11 +355,9 @@ export const AdminSecurity = (() => {
           return;
         }
 
-        // Encrypt { token, role } together and store on this device
+        // Encrypt { token, role } together and store in RTDB
         const blob = await encryptPayload({ token: tokenRaw, role: roleSel }, password);
-        saveBlob(name, blob);
-        addToRegistry(name);
-        saveRoleHint(name, roleSel);
+        await saveBlob(name, blob, roleSel);
 
         // Refresh the dropdown so the new name appears
         window.__refreshAdminDropdown?.();
@@ -389,7 +371,7 @@ export const AdminSecurity = (() => {
       if (mode === "reset") {
         const name     = el("admin-name")?.value;
         const tokenRaw = el("admin-token")?.value?.trim();
-        const hint     = getRoleHint(name) || ROLE_LIMITED;
+        const hint     = await getRoleHint(name) || ROLE_LIMITED;
 
         if (!tokenRaw) {
           await showAlertModal("Token Required",
@@ -438,8 +420,7 @@ export const AdminSecurity = (() => {
         }
 
         const blob = await encryptPayload({ token: tokenRaw, role: hint }, password);
-        saveBlob(name, blob);
-        saveRoleHint(name, hint);
+        await saveBlob(name, blob, hint);
 
         await setRole(hint);
         finishLogin(tokenRaw, name);
@@ -449,7 +430,7 @@ export const AdminSecurity = (() => {
         // ── RETURNING LOGIN ──────────────────────────────────────────────────
       if (mode === "returning") {
         const name    = el("admin-name")?.value;
-        const blob    = getStoredBlob(name);
+        const blob    = await getStoredBlob(name);
         const payload = await decryptBlob(blob, password);
 
         if (!payload) {
@@ -520,7 +501,7 @@ export const AdminSecurity = (() => {
       );
       return;
     }
-    clearBlob(name);
+    await clearBlob(name);
     onAdminNameChange(); // re-render: switches to "reset" mode UI
   }
 
