@@ -32,5 +32,10 @@ export const CONFIG = {
     owner: repositoryConfig.owner,
     repo: repositoryConfig.repo,
     version: "2.2.6",
-    debug: false
+    // Debug: set via localStorage so you don't need to edit source code.
+    // To enable:  localStorage.setItem('ksss_debug', 'true')  then refresh.
+    // To disable: localStorage.removeItem('ksss_debug')  then refresh.
+    get debug() {
+        try { return localStorage.getItem('ksss_debug') === 'true'; } catch { return false; }
+    }
 };

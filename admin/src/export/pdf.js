@@ -57,7 +57,7 @@ export async function exportToPDF() {
   );
 
   // ── Round sections ────────────────────────────────────────────
-  const roundSections = currentData.rounds.map(round => {
+  const roundSections = currentData.rounds.map((round, rIdx) => {
     const rows = round.matches.map(match => {
       const isPending = !match.winner || match.winner === "Pending";
       return `
