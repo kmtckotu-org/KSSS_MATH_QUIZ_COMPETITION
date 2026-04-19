@@ -1,158 +1,292 @@
-// admin/src/debug.js — Full Audit Debug Panel v3.0
+// admin/src/debug.js — Full Audit Debug Panel v4.0
 import { store } from './core/store.js';
 import { ErrorHandler } from './utils/errorHandler.js';
 import { CONFIG } from './core/config.js';
 
-let debugPanel = null;
+let debugPanel  = null;
 let debugToggle = null;
-let currentTab = 'overview';
+let currentTab  = 'overview';
 let debugInterval = null;
 
 const TAB_DEFS = [
-    { id: 'overview',   label: '📊 Overview'  },
-    { id: 'hooks',      label: '🪝 Hooks'     },
-    { id: 'store',      label: '📦 Store'     },
-    { id: 'firebase',   label: '🔥 Firebase'  },
-    { id: 'session',    label: '🔐 Session'   },
-    { id: 'data',       label: '🏆 Data'      },
-    { id: 'errors',     label: '🚨 Errors'    },
-    { id: 'history',    label: '📝 History'   },
+    { id: 'overview', label: '📊',  title: 'Overview'  },
+    { id: 'session',  label: '🔐',  title: 'Session'   },
+    { id: 'firebase', label: '🔥',  title: 'Firebase'  },
+    { id: 'hooks',    label: '🪝',  title: 'Hooks'     },
+    { id: 'store',    label: '📦',  title: 'Store'     },
+    { id: 'data',     label: '🏆',  title: 'Data'      },
+    { id: 'errors',   label: '🚨',  title: 'Errors'    },
+    { id: 'history',  label: '📝',  title: 'History'   },
 ];
 
+// ── CSS injected once ──────────────────────────────────────────────
+function injectStyles() {
+    if (document.getElementById('debug-panel-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'debug-panel-styles';
+    style.textContent = `
+        #debug-panel {
+            font-family: 'Fira Code', 'Cascadia Code', 'Segoe UI', monospace !important;
+        }
+        #debug-panel * { box-sizing: border-box; }
+        #debug-panel::-webkit-scrollbar { width: 4px; }
+        #debug-panel::-webkit-scrollbar-track { background: #0f172a; }
+        #debug-panel::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+        .dp-tab-scroll::-webkit-scrollbar { height: 0; }
+        .dp-content::-webkit-scrollbar { width: 4px; }
+        .dp-content::-webkit-scrollbar-track { background: transparent; }
+        .dp-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+        .dp-tab-btn {
+            flex-shrink: 0;
+            background: transparent;
+            color: #475569;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            transition: color 0.15s, border-color 0.15s;
+            letter-spacing: 0.03em;
+        }
+        .dp-tab-btn:hover { color: #94a3b8; }
+        .dp-tab-btn.active { color: #60a5fa; border-bottom-color: #3b82f6; }
+        .dp-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px solid #1e293b;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+        .dp-row:last-child { border-bottom: none; }
+        .dp-label {
+            color: #64748b;
+            min-width: 100px;
+            flex-shrink: 0;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            padding-top: 1px;
+        }
+        .dp-val { color: #cbd5e1; word-break: break-all; flex: 1; }
+        .dp-val.ok { color: #4ade80; }
+        .dp-val.warn { color: #fbbf24; }
+        .dp-val.err { color: #f87171; }
+        .dp-card {
+            background: #0c1526;
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .dp-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .dp-badge.green  { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+        .dp-badge.yellow { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+        .dp-badge.red    { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+        .dp-badge.blue   { background: rgba(96,165,250,0.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+        .dp-action-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 600;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .dp-action-btn:hover { background: #2d3f5e; color: #e2e8f0; border-color: #60a5fa; }
+        .dp-action-btn.danger { border-color: #dc2626; color: #f87171; }
+        .dp-action-btn.danger:hover { background: rgba(220,38,38,0.2); color: #fca5a5; }
+        .dp-title-bar {
+            background: linear-gradient(135deg, #0f172a 0%, #0c1526 100%);
+            border-bottom: 1px solid #1e3a5f;
+        }
+        @keyframes dp-pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+        .dp-live-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #4ade80;
+            animation: dp-pulse 2s ease-in-out infinite;
+            display: inline-block;
+            margin-right: 4px;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// ── Init ──────────────────────────────────────────────────────────
 export function initDebugPanel() {
     if (!CONFIG.debug) return;
 
-    // Check role
+    // ── Role gate: only absolute admins see the panel ──
     let isAbsolute = false;
     try {
         const roleObj = JSON.parse(sessionStorage.getItem('secureAdminRole') || '{}');
-        isAbsolute = roleObj.role === 'absolute';
+        isAbsolute = roleObj?.role === 'absolute';
     } catch {}
     if (!isAbsolute) return;
-    // Don't mount twice
+
+    // Don't re-mount if already present
     if (document.getElementById('debug-toggle')) return;
 
-    // ── Toggle Button: always a small circle in the bottom-left ──────
+    injectStyles();
+
+    // ── The faint trigger button ───────────────────────
     debugToggle = document.createElement('button');
-    debugToggle.id = 'debug-toggle';
+    debugToggle.id    = 'debug-toggle';
+    debugToggle.title = 'Toggle debug panel (Absolute Admin only)';
     debugToggle.innerHTML = '🐞';
-    debugToggle.title = 'Toggle debug panel';
     debugToggle.style.cssText = `
         position: fixed;
-        bottom: 10px;
-        left: 10px;
+        bottom: 12px;
+        left: 12px;
         z-index: 10002;
-        background: rgba(100, 116, 139, 0.2);
-        color: rgba(255, 255, 255, 0.4);
-        border: 1px solid rgba(100, 116, 139, 0.3);
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
-        font-size: 14px;
-        line-height: 1;
+        background: rgba(100, 116, 139, 0.15);
+        border: 1px solid rgba(100, 116, 139, 0.2);
+        color: rgba(255,255,255,0.3);
+        font-size: 13px;
         cursor: pointer;
-        transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0;
-        opacity: 0.5;
+        opacity: 0.4;
+        transition: opacity 0.2s, background 0.2s, transform 0.2s;
+        line-height: 1;
     `;
     debugToggle.onmouseover = () => {
-        debugToggle.style.opacity = '1';
-        debugToggle.style.background = 'rgba(100, 116, 139, 0.8)';
+        debugToggle.style.opacity  = '1';
+        debugToggle.style.background = 'rgba(59,130,246,0.6)';
+        debugToggle.style.transform  = 'scale(1.15)';
     };
     debugToggle.onmouseout = () => {
-        debugToggle.style.opacity = '0.5';
-        debugToggle.style.background = 'rgba(100, 116, 139, 0.2)';
+        debugToggle.style.opacity  = '0.4';
+        debugToggle.style.background = 'rgba(100,116,139,0.15)';
+        debugToggle.style.transform  = 'scale(1)';
     };
 
-    // ── Panel: compact floating card, left side, NOT full width ──────
+    // ── Panel shell ───────────────────────────────────
     debugPanel = document.createElement('div');
     debugPanel.id = 'debug-panel';
     debugPanel.style.cssText = `
         position: fixed;
-        bottom: 72px;
+        bottom: 50px;
         left: 12px;
-        width: 380px;
+        width: 460px;
         max-width: calc(100vw - 24px);
-        max-height: 60vh;
+        max-height: 68vh;
         overflow: hidden;
         background: #0f172a;
         color: #e2e8f0;
-        font-family: 'Fira Code', 'Segoe UI', monospace;
-        font-size: 11px;
-        border-radius: 12px;
+        border-radius: 14px;
         z-index: 10001;
-        border: 1px solid #1e40af;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+        border: 1px solid #1e3a5f;
+        box-shadow: 0 25px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(96,165,250,0.08);
         display: none;
         flex-direction: column;
+        backdrop-filter: blur(12px);
     `;
 
     debugToggle.onclick = () => {
-        const isVisible = debugPanel.style.display !== 'none';
-        debugPanel.style.display = isVisible ? 'none' : 'flex';
-        if (!isVisible) renderPanel();
+        const isOpen = debugPanel.style.display !== 'none';
+        debugPanel.style.display = isOpen ? 'none' : 'flex';
+        if (!isOpen) renderPanel();
     };
 
     document.body.appendChild(debugToggle);
     document.body.appendChild(debugPanel);
 
-    // Auto-refresh every 2 seconds when visible
+    // Auto-refresh when visible
     if (debugInterval) clearInterval(debugInterval);
     debugInterval = setInterval(() => {
-        if (debugPanel.style.display !== 'none') renderPanel();
+        if (debugPanel && debugPanel.style.display !== 'none') renderPanel();
     }, 2000);
 
-    // Flash red on error
+    // Flash on error
     ErrorHandler.onError(() => {
-        if (debugPanel.style.display !== 'none') renderPanel();
+        if (debugPanel && debugPanel.style.display !== 'none') renderPanel();
         flashToggle();
     });
 }
 
-// Clean up on page unload
+// Clean up interval on page unload
 window.addEventListener('beforeunload', () => {
     if (debugInterval) clearInterval(debugInterval);
 });
 
 function flashToggle() {
     if (!debugToggle) return;
-    debugToggle.style.background = '#dc2626';
-    debugToggle.style.borderColor = '#ef4444';
+    debugToggle.style.background   = 'rgba(220,38,38,0.7)';
+    debugToggle.style.borderColor  = '#ef4444';
+    debugToggle.style.opacity      = '1';
     setTimeout(() => {
-        debugToggle.style.background = '#1e40af';
-        debugToggle.style.borderColor = '#3b82f6';
-    }, 1500);
+        debugToggle.style.background  = 'rgba(100,116,139,0.15)';
+        debugToggle.style.borderColor = 'rgba(100,116,139,0.2)';
+        debugToggle.style.opacity     = '0.4';
+    }, 2000);
 }
 
 // ── Diagnostic Helpers ────────────────────────────────────────────
 
+/**
+ * Read the real admin role from sessionStorage.
+ * The role is stored as a signed JSON object under 'secureAdminRole',
+ * NOT as a plain string under 'adminRole'.
+ */
+function getAdminRole() {
+    try {
+        const raw = sessionStorage.getItem('secureAdminRole');
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        return obj?.role || null;
+    } catch {
+        return null;
+    }
+}
+
+function checkSession() {
+    const token = sessionStorage.getItem('githubToken') || null;
+    const user  = sessionStorage.getItem('adminUser')   || null;
+    const role  = getAdminRole();
+    return { token, user, role };
+}
+
 function checkFirebase() {
     try {
-        if (!window.firebase) return { ok: false, msg: 'window.firebase not found — SDK not loaded' };
-        if (!window.firebase.apps || !window.firebase.apps.length) return { ok: false, msg: 'Firebase app not initialized' };
+        if (!window.firebase)
+            return { ok: false, msg: 'window.firebase not found — SDK not loaded' };
+        if (!window.firebase.apps?.length)
+            return { ok: false, msg: 'Firebase app not initialized' };
         const db = window.firebase.database();
-        if (!db) return { ok: false, msg: 'firebase.database() returned null' };
+        if (!db)
+            return { ok: false, msg: 'firebase.database() returned null' };
         return { ok: true, msg: `Connected · App: ${window.firebase.apps[0].name}` };
     } catch (e) {
         return { ok: false, msg: e.message };
     }
 }
 
-function checkSession() {
-    const token   = sessionStorage.getItem('githubToken') || null;
-    const user    = sessionStorage.getItem('adminUser')   || localStorage.getItem('ksss_current_user') || null;
-    const role    = sessionStorage.getItem('adminRole')   || null;
-    return { token, user, role };
-}
-
 function checkData() {
     const d = store.getCurrentData();
     if (!d) return { ok: false, msg: 'No tournament data loaded', rounds: 0, matches: 0, grade: null };
-    const rounds  = d.rounds?.length ?? 0;
-    const matches = (d.rounds || []).reduce((s, r) => s + (r.matches?.length ?? 0), 0);
+    const rounds    = d.rounds?.length ?? 0;
+    const matches   = (d.rounds || []).reduce((s, r) => s + (r.matches?.length ?? 0), 0);
     const completed = (d.rounds || []).reduce((s, r) => s + (r.matches || []).filter(m => m.winner && m.winner !== 'Pending').length, 0);
     return { ok: true, msg: 'Data loaded', grade: d.grade, rounds, matches, completed };
 }
@@ -160,8 +294,7 @@ function checkData() {
 function checkHooks() {
     const hooks = window.KSSS_UI_HOOKS;
     if (!hooks) return { count: 0, list: [], isProxy: false };
-    const keys = Object.keys(hooks);
-    // Determine if it is still the boot proxy or the real hooks
+    const keys    = Object.keys(hooks);
     const isProxy = keys.length === 0;
     return { count: keys.length, list: keys, isProxy };
 }
@@ -169,249 +302,374 @@ function checkHooks() {
 // ── Tab Renderers ─────────────────────────────────────────────────
 
 function renderOverview() {
-    const fb      = checkFirebase();
-    const sess    = checkSession();
-    const data    = checkData();
-    const hooks   = checkHooks();
-    const errors  = ErrorHandler.errors.length;
+    const fb    = checkFirebase();
+    const sess  = checkSession();
+    const data  = checkData();
+    const hooks = checkHooks();
+    const errors = ErrorHandler.errors.length;
+    const role  = sess.role;
 
-    const row = (label, ok, msg) => `
-        <div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid #1e293b;">
-            <span style="color:${ok ? '#4ade80' : '#f87171'};font-size:14px;">${ok ? '✅' : '❌'}</span>
-            <span style="color:#94a3b8;min-width:110px;flex-shrink:0;">${label}</span>
-            <span style="color:${ok ? '#d1fae5' : '#fecaca'};word-break:break-all;">${msg}</span>
+    const badge = (text, type) => `<span class="dp-badge ${type}">${text}</span>`;
+
+    const row = (label, statusOk, value, extra = '') => `
+        <div class="dp-row">
+            <span class="dp-label">${label}</span>
+            <span class="dp-val ${statusOk ? 'ok' : 'err'}" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${statusOk ? '✅' : '❌'} ${value}
+                ${extra}
+            </span>
         </div>`;
+
+    const roleBadge = role
+        ? (role === 'absolute'
+            ? badge('⭐ ABSOLUTE', 'yellow')
+            : badge('LIMITED', 'blue'))
+        : badge('NOT SET', 'red');
 
     return `
-        <div style="font-weight:700;color:#fbbf24;margin-bottom:10px;font-size:13px;">🔎 System Audit — ${new Date().toLocaleTimeString()}</div>
-        ${row('Firebase DB', fb.ok, fb.msg)}
-        ${row('Session Token', !!sess.token, sess.token ? `Present (${sess.token.length} chars)` : 'Not set — unauthenticated')}
-        ${row('Admin User', !!sess.user, sess.user || 'None')}
-        ${row('Admin Role', !!sess.role, sess.role || 'None')}
-        ${row('Tournament Data', data.ok, data.ok ? `Grade ${data.grade} · ${data.rounds}R · ${data.matches}M (${data.completed} done)` : data.msg)}
-        ${row('UI Hooks', !hooks.isProxy && hooks.count > 0, hooks.isProxy ? '⚠️ Boot proxy still active (modules loading…)' : `${hooks.count} hooks registered`)}
-        ${row('Error Count', errors === 0, errors === 0 ? 'No errors' : `${errors} error(s) captured`)}
-        <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
-            <button onclick="window.__debugRunFullTest()" style="background:#1e40af;color:#bfdbfe;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;white-space:nowrap;">⚡ Test</button>
-            <button onclick="localStorage.setItem('ksss_debug','true')" style="background:#0f766e;color:#99f6e4;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 ON</button>
-            <button onclick="localStorage.setItem('ksss_debug','false')" style="background:#4b5563;color:#d1d5db;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 OFF</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span class="dp-live-dot"></span>
+            <span style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;">
+                Live Audit · ${new Date().toLocaleTimeString()}
+            </span>
+        </div>
+        <div class="dp-card">
+            ${row('Admin', !!sess.user,  sess.user  || 'Not authenticated')}
+            ${row('Role',  !!role,       role ? role.toUpperCase() : 'None', roleBadge)}
+            ${row('Token', !!sess.token, sess.token ? `Present (${sess.token.length} chars)` : 'Missing — not logged in')}
+        </div>
+        <div class="dp-card">
+            ${row('Firebase', fb.ok,    fb.msg)}
+            ${row('UI Hooks', !hooks.isProxy && hooks.count > 0,
+                hooks.isProxy ? 'Boot proxy (loading…)' : `${hooks.count} hooks ready`)}
+            ${row('Match Data', data.ok, data.ok
+                ? `Grade ${data.grade} · ${data.rounds} rounds · ${data.matches} matches (${data.completed} done)`
+                : data.msg)}
+            ${row('Errors', errors === 0, errors === 0 ? 'Clean' : `${errors} captured`, errors > 0 ? badge(`${errors} ERR`, 'red') : '')}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;">
+            <button class="dp-action-btn" onclick="window.__debugRunFullTest()">⚡ Run Full Test</button>
+            <button class="dp-action-btn" onclick="window.__debugSelectTab('errors')">🚨 View Errors</button>
+            <button class="dp-action-btn" onclick="localStorage.setItem('ksss_debug','true');location.reload()">🟢 Debug ON</button>
+            <button class="dp-action-btn" onclick="localStorage.setItem('ksss_debug','false');location.reload()">⭕ Debug OFF</button>
         </div>`;
+}
+
+function renderSession() {
+    const s    = checkSession();
+    const role = s.role;
+
+    const roleColor = role === 'absolute' ? '#fbbf24' : role ? '#60a5fa' : '#f87171';
+    const roleTxt   = role ? role.charAt(0).toUpperCase() + role.slice(1) : 'None (not logged in)';
+
+    // Parse the raw secureAdminRole object for inspection
+    let secureRoleRaw = '—';
+    try {
+        const raw = sessionStorage.getItem('secureAdminRole');
+        if (raw) {
+            const obj = JSON.parse(raw);
+            secureRoleRaw = `role=${obj.role} · nonce=${obj.nonce?.slice(0,6)}… · sig=${obj.hash?.slice(0,12)}…`;
+        }
+    } catch {}
+
+    return `
+        <div class="dp-card">
+            <div class="dp-row">
+                <span class="dp-label">Admin User</span>
+                <span class="dp-val ${s.user ? 'ok' : 'err'}">${s.user || '&lt;none&gt;'}</span>
+            </div>
+            <div class="dp-row">
+                <span class="dp-label">Role</span>
+                <span class="dp-val" style="color:${roleColor};font-weight:700;">${roleTxt}</span>
+            </div>
+            <div class="dp-row">
+                <span class="dp-label">Signed Blob</span>
+                <span class="dp-val" style="color:#64748b;font-size:10px;">${secureRoleRaw}</span>
+            </div>
+            <div class="dp-row">
+                <span class="dp-label">Auth Token</span>
+                <span class="dp-val ${s.token ? 'ok' : 'err'}">
+                    ${s.token ? `✅ Present (${s.token.length} chars)` : '❌ Not set'}
+                </span>
+            </div>
+            <div class="dp-row">
+                <span class="dp-label">Token Preview</span>
+                <span class="dp-val" style="color:#64748b;font-size:10px;">
+                    ${s.token ? s.token.slice(0, 4) + '…' + s.token.slice(-4) : '—'}
+                </span>
+            </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="dp-action-btn danger" onclick="sessionStorage.clear();location.reload();">🔴 Force Logout</button>
+            <button class="dp-action-btn" onclick="
+                const o = {user:sessionStorage.getItem('adminUser'), secureRole:sessionStorage.getItem('secureAdminRole'), token:sessionStorage.getItem('githubToken')};
+                console.table(o); console.log('secureAdminRole parsed:', JSON.parse(o.secureRole||'null'));
+            ">📋 Log to Console</button>
+        </div>`;
+}
+
+function renderFirebase() {
+    const fb = checkFirebase();
+    let html = `
+        <div class="dp-card">
+            <div class="dp-row">
+                <span class="dp-label">Status</span>
+                <span class="dp-val ${fb.ok ? 'ok' : 'err'}">${fb.ok ? '✅' : '❌'} ${fb.msg}</span>
+            </div>`;
+
+    if (window.firebase?.apps?.length) {
+        const cfg = window.firebase.apps[0].options;
+        html += `
+            <div class="dp-row">
+                <span class="dp-label">Project</span>
+                <span class="dp-val" style="color:#67e8f9;">${cfg.projectId}</span>
+            </div>
+            <div class="dp-row">
+                <span class="dp-label">DB URL</span>
+                <span class="dp-val" style="color:#67e8f9;font-size:10px;">${cfg.databaseURL}</span>
+            </div>
+            <div class="dp-row">
+                <span class="dp-label">Auth Domain</span>
+                <span class="dp-val" style="color:#67e8f9;font-size:10px;">${cfg.authDomain}</span>
+            </div>`;
+    }
+
+    html += `</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="dp-action-btn" onclick="window.__debugTestFirebaseRead()">🔥 Test DB Read</button>
+            <button class="dp-action-btn" onclick="
+                firebase.database().ref('admins').once('value')
+                    .then(s => { console.log('RTDB admins:', s.val()); alert('Admins node logged to console.'); })
+                    .catch(e => alert('Error: '+e.message));
+            ">👤 List Admins Node</button>
+        </div>`;
+    return html;
 }
 
 function renderHooks() {
     const hooks = checkHooks();
-    if (hooks.isProxy) return `<div style="color:#fbbf24;">⚠️ KSSS_UI_HOOKS is still the boot proxy. Modules haven't finished loading yet.</div>`;
-    if (hooks.count === 0) return `<div style="color:#f87171;">❌ No hooks registered at all. Initialization likely failed.</div>`;
+    if (hooks.isProxy) return `<div style="color:#fbbf24;padding:8px 0;">⚠️ KSSS_UI_HOOKS is still the boot proxy. Modules haven't finished loading.</div>`;
+    if (hooks.count === 0)  return `<div style="color:#f87171;padding:8px 0;">❌ No hooks registered. Initialization likely failed — check console for errors.</div>`;
     return `
-        <div style="color:#4ade80;margin-bottom:8px;">✅ ${hooks.count} hooks registered</div>
-        <div style="columns:2;gap:8px;">
-            ${hooks.list.map(k => `<div style="padding:2px 0;color:#93c5fd;">→ ${k}</div>`).join('')}
+        <div style="color:#4ade80;margin-bottom:10px;font-size:11px;">✅ ${hooks.count} hooks registered</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;">
+            ${hooks.list.map(k => `
+                <div style="padding:4px 6px;background:#0c1526;border-radius:4px;color:#93c5fd;font-size:10px;">→ ${k}</div>
+            `).join('')}
         </div>`;
 }
 
 function renderStore() {
     const s = store.state;
-    return Object.entries(s).map(([k, v]) => {
+    const entries = Object.entries(s);
+    if (!entries.length) return `<div style="color:#64748b;padding:8px 0;">Store is empty.</div>`;
+    return entries.map(([k, v]) => {
         let display;
-        if (v === null)               display = '<span style="color:#6b7280">null</span>';
+        if (v === null)              display = `<span style="color:#475569">null</span>`;
         else if (typeof v === 'object') {
             const str = JSON.stringify(v);
-            display = `<span style="color:#f472b6">${str.length > 80 ? str.slice(0,80)+'…' : str}</span>`;
-        } else display = `<span style="color:#a5f3fc">${String(v)}</span>`;
-        return `<div style="padding:3px 0;border-bottom:1px solid #1e293b;"><span style="color:#94a3b8;">${k}</span>: ${display}</div>`;
-    }).join('');
-}
-
-function renderFirebase() {
-    const fb = checkFirebase();
-    let html = `<div style="color:${fb.ok ? '#4ade80':'#f87171'};margin-bottom:10px;">${fb.ok ? '✅' : '❌'} ${fb.msg}</div>`;
-    if (window.firebase && window.firebase.apps && window.firebase.apps.length) {
-        const app = window.firebase.apps[0];
-        const cfg = app.options;
-        html += `
-            <div style="background:#1e293b;padding:8px;border-radius:6px;line-height:1.8;">
-                <div><span style="color:#94a3b8">Project ID:</span> <span style="color:#67e8f9">${cfg.projectId}</span></div>
-                <div><span style="color:#94a3b8">Database URL:</span> <span style="color:#67e8f9">${cfg.databaseURL}</span></div>
-                <div><span style="color:#94a3b8">Auth Domain:</span> <span style="color:#67e8f9">${cfg.authDomain}</span></div>
+            display = `<span style="color:#f472b6">${str.length > 100 ? str.slice(0, 100) + '…' : str}</span>`;
+        } else {
+            display = `<span style="color:#a5f3fc">${String(v)}</span>`;
+        }
+        return `
+            <div class="dp-row">
+                <span class="dp-label">${k}</span>
+                <span class="dp-val" style="word-break:break-all;">${display}</span>
             </div>`;
-    }
-    html += `
-        <div style="margin-top:10px;">
-            <button onclick="window.__debugTestFirebaseRead()" style="background:#1e40af;color:#bfdbfe;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">🔥 Test DB Read (Grade 7)</button>
-        </div>`;
-    return html;
-}
-
-function renderSession() {
-    const s = checkSession();
-    return `
-        <div style="line-height:2;background:#1e293b;padding:10px;border-radius:6px;">
-            <div><span style="color:#94a3b8">User:</span> <span style="color:#a5f3fc">${s.user || '<none>'}</span></div>
-            <div><span style="color:#94a3b8">Role:</span> <span style="color:#a5f3fc">${s.role || '<none>'}</span></div>
-            <div><span style="color:#94a3b8">Token:</span> <span style="color:${s.token ? '#4ade80' : '#f87171'}">${s.token ? `✅ Present (${s.token.length} chars)` : '❌ Not set'}</span></div>
-        </div>
-        <div style="margin-top:8px;display:flex;gap:6px;">
-            <button onclick="sessionStorage.clear();location.reload();" style="background:#dc2626;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;">🔴 Force Logout</button>
-            <button onclick="console.log('Session:',{user:sessionStorage.getItem('adminUser'),role:sessionStorage.getItem('adminRole'),token:sessionStorage.getItem('githubToken')})" style="background:#4b5563;color:#d1d5db;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;">📋 Log Session</button>
-        </div>`;
+    }).join('');
 }
 
 function renderData() {
     const d = checkData();
-    if (!d.ok) return `<div style="color:#f87171;">❌ ${d.msg}</div>`;
+    if (!d.ok) return `<div class="dp-card" style="color:#f87171;">❌ ${d.msg}</div>`;
+
     const raw = store.getCurrentData();
+    const pct = d.matches ? Math.round(d.completed / d.matches * 100) : 0;
+
     return `
-        <div style="line-height:2;background:#1e293b;padding:10px;border-radius:6px;margin-bottom:8px;">
-            <div><span style="color:#94a3b8">Grade:</span> <span style="color:#a5f3fc">${d.grade}</span></div>
-            <div><span style="color:#94a3b8">Rounds:</span> <span style="color:#a5f3fc">${d.rounds}</span></div>
-            <div><span style="color:#94a3b8">Matches:</span> <span style="color:#a5f3fc">${d.matches}</span></div>
-            <div><span style="color:#94a3b8">Completed:</span> <span style="color:#4ade80">${d.completed} / ${d.matches}</span></div>
+        <div class="dp-card">
+            <div class="dp-row"><span class="dp-label">Grade</span><span class="dp-val ok">${d.grade}</span></div>
+            <div class="dp-row"><span class="dp-label">Rounds</span><span class="dp-val">${d.rounds}</span></div>
+            <div class="dp-row"><span class="dp-label">Matches</span><span class="dp-val">${d.matches}</span></div>
+            <div class="dp-row">
+                <span class="dp-label">Progress</span>
+                <span class="dp-val">
+                    <span style="color:#4ade80;">${d.completed}</span>
+                    <span style="color:#475569;"> / ${d.matches} done</span>
+                    <span style="color:#fbbf24;margin-left:4px;">(${pct}%)</span>
+                </span>
+            </div>
         </div>
-        ${raw.rounds.map((r, i) => {
+        <div style="margin-bottom:8px;">
+        ${(raw.rounds || []).map((r) => {
             const done = r.matches.filter(m => m.winner && m.winner !== 'Pending').length;
-            const pct  = r.matches.length ? Math.round(done / r.matches.length * 100) : 0;
-            return `<div style="padding:4px 0;border-bottom:1px solid #1e293b;">
-                <span style="color:#94a3b8">${r.name}:</span>
-                <span style="color:#fbbf24">${done}/${r.matches.length}</span>
-                <span style="color:#4b5563"> (${pct}%) </span>
-                <span style="color:${r.status==='locked'?'#f59e0b':'#4ade80'}">${r.status==='locked'?'🔒 Locked':'🔓 Active'}</span>
-            </div>`;
+            const rPct = r.matches.length ? Math.round(done / r.matches.length * 100) : 0;
+            return `
+                <div class="dp-row">
+                    <span class="dp-label" style="min-width:80px;">${r.name}</span>
+                    <span style="flex:1;">
+                        <div style="background:#1e293b;border-radius:4px;height:6px;overflow:hidden;margin-bottom:3px;">
+                            <div style="background:${rPct===100?'#4ade80':'#3b82f6'};width:${rPct}%;height:100%;transition:width 0.3s;"></div>
+                        </div>
+                        <span style="color:#94a3b8;font-size:10px;">${done}/${r.matches.length} · ${rPct}% · </span>
+                        <span style="color:${r.status==='locked'?'#f59e0b':'#4ade80'};font-size:10px;">${r.status==='locked'?'🔒 Locked':'🔓 Active'}</span>
+                    </span>
+                </div>`;
         }).join('')}
-        <div style="margin-top:8px;">
-            <button onclick="console.log('Full data snapshot:',JSON.parse(JSON.stringify(window.__store?.getCurrentData?.()||{})))" style="background:#4b5563;color:#d1d5db;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;">📋 Log Raw Data</button>
-        </div>`;
+        </div>
+        <button class="dp-action-btn" onclick="console.log('Full data:',JSON.parse(JSON.stringify(window.KSSS_UI_HOOKS||{})))">📋 Log Raw Data</button>`;
 }
 
 function renderErrors() {
     const errs = ErrorHandler.errors;
-    if (!errs.length) return `<div style="color:#4ade80;">✅ No errors captured yet.</div>`;
+    if (!errs.length) return `<div style="color:#4ade80;padding:8px 0;">✅ No errors captured yet. Looking good!</div>`;
+
     return `
-        <div style="color:#f87171;margin-bottom:8px;">${errs.length} error(s) captured:</div>
-        <div style="max-height:280px;overflow-y:auto;">
-        ${[...errs].reverse().map((e, i) => `
-            <div style="background:#1e293b;border-left:3px solid #ef4444;padding:6px 8px;border-radius:4px;margin-bottom:6px;">
-                <div style="color:#fca5a5;font-weight:700;font-size:10px;">[${e.timestamp?.substring(11,19)||'?'}] ${e.source}</div>
-                <div style="color:#fecaca;margin:2px 0;">${e.message}</div>
+        <div style="color:#f87171;margin-bottom:8px;font-size:11px;">${errs.length} error(s) captured:</div>
+        <div class="dp-content" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+        ${[...errs].reverse().map(e => `
+            <div style="background:#160a0a;border-left:3px solid #ef4444;padding:8px 10px;border-radius:0 6px 6px 0;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                    <span style="color:#fca5a5;font-weight:700;font-size:10px;">${e.source || 'unknown'}</span>
+                    <span style="color:#6b7280;font-size:9px;">${e.timestamp?.substring(11,19) || '?'}</span>
+                </div>
+                <div style="color:#fecaca;font-size:10px;word-break:break-word;">${e.message}</div>
             </div>`).join('')}
         </div>
-        <button onclick="ErrorHandler.clearErrors();window.dispatchEvent(new Event('debug-refresh'))" style="margin-top:6px;background:#dc2626;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;">🗑️ Clear All Errors</button>`;
+        <button class="dp-action-btn danger" style="margin-top:8px;" onclick="ErrorHandler.clearErrors()">🗑️ Clear All Errors</button>`;
 }
 
 function renderHistory() {
-    const hist = store.getChangeHistory();
-    if (!hist.length) return `<div style="color:#94a3b8;">No state changes recorded yet.</div>`;
+    const hist = store.getChangeHistory?.() || [];
+    if (!hist.length) return `<div style="color:#64748b;padding:8px 0;">No state changes recorded yet.</div>`;
+
     return `
-        <div style="color:#94a3b8;margin-bottom:6px;">${hist.length} state change(s):</div>
-        <div style="max-height:280px;overflow-y:auto;">
-        ${[...hist].reverse().slice(0,40).map(h => `
-            <div style="padding:4px 0;border-bottom:1px solid #1e293b;">
-                <span style="color:#818cf8">${h.key}</span>
-                <span style="color:#6b7280"> via </span>
-                <span style="color:#fbbf24">${h.source}</span>
+        <div style="color:#64748b;font-size:10px;margin-bottom:8px;">${hist.length} state change(s) — latest first</div>
+        <div class="dp-content" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;">
+        ${[...hist].reverse().slice(0, 50).map(h => `
+            <div class="dp-row" style="padding:4px 0;">
+                <span style="color:#818cf8;flex-shrink:0;min-width:90px;font-size:10px;">${h.key || '?'}</span>
+                <span style="color:#475569;font-size:10px;">via</span>
+                <span style="color:#fbbf24;font-size:10px;">${h.source || '?'}</span>
             </div>`).join('')}
         </div>
-        <button onclick="store.clearHistory?store.clearHistory():null" style="margin-top:6px;background:#4b5563;color:#d1d5db;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:10px;">🗑️ Clear History</button>`;
+        <button class="dp-action-btn" style="margin-top:8px;" onclick="store.clearHistory?.();renderPanel?.()">🗑️ Clear History</button>`;
 }
 
 // ── Main Render ───────────────────────────────────────────────────
 
 function renderPanel() {
     if (!debugPanel) return;
+    const errorCount = ErrorHandler.errors.length;
+    const sess       = checkSession();
+    const roleLabel  = sess.role ? sess.role.toUpperCase() : 'NO ROLE';
+    const roleColor  = sess.role === 'absolute' ? '#fbbf24' : sess.role ? '#60a5fa' : '#ef4444';
 
     const tabBar = TAB_DEFS.map(t => `
         <button
+            class="dp-tab-btn ${currentTab === t.id ? 'active' : ''}"
             onclick="window.__debugSelectTab('${t.id}')"
-            style="flex-shrink:0;background:${currentTab===t.id?'#1e40af':'transparent'};color:${currentTab===t.id?'#bfdbfe':'#64748b'};border:none;border-bottom:2px solid ${currentTab===t.id?'#60a5fa':'transparent'};padding:6px 8px;cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;transition:all 0.15s;">
-            ${t.label}
+            title="${t.title}">
+            ${t.label} ${t.title}
         </button>`).join('');
 
-    const errorCount = ErrorHandler.errors.length;
     let body = '';
     switch (currentTab) {
         case 'overview': body = renderOverview(); break;
+        case 'session':  body = renderSession();  break;
+        case 'firebase': body = renderFirebase(); break;
         case 'hooks':    body = renderHooks();    break;
         case 'store':    body = renderStore();    break;
-        case 'firebase': body = renderFirebase(); break;
-        case 'session':  body = renderSession();  break;
         case 'data':     body = renderData();     break;
         case 'errors':   body = renderErrors();   break;
         case 'history':  body = renderHistory();  break;
     }
 
     debugPanel.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #1e293b;background:#0f172a;border-radius:12px 12px 0 0;flex-shrink:0;">
-            <span style="font-weight:700;color:#fbbf24;font-size:12px;">🐞 Debug Console v3.0</span>
+        <div class="dp-title-bar" style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px 14px;
+            border-bottom:1px solid #1e3a5f;
+            flex-shrink:0;
+            border-radius:14px 14px 0 0;
+        ">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:15px;">🐞</span>
+                <div>
+                    <div style="font-weight:700;color:#e2e8f0;font-size:12px;letter-spacing:0.03em;">Debug Console <span style="color:#334155;">v4.0</span></div>
+                    <div style="font-size:9px;color:${roleColor};font-weight:600;letter-spacing:0.06em;">${roleLabel}</div>
+                </div>
+            </div>
             <div style="display:flex;gap:6px;align-items:center;">
-                ${errorCount > 0 ? `<span style="background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;">${errorCount} ERR</span>` : ''}
-                <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:transparent;color:#64748b;border:none;cursor:pointer;font-size:16px;line-height:1;">✕</button>
+                ${errorCount > 0 ? `<span class="dp-badge red">${errorCount} ERR</span>` : ''}
+                <span class="dp-live-dot" title="Auto-refreshing every 2s"></span>
+                <button
+                    onclick="document.getElementById('debug-panel').style.display='none'"
+                    style="background:transparent;color:#475569;border:none;cursor:pointer;font-size:18px;line-height:1;padding:0;transition:color 0.15s;"
+                    onmouseover="this.style.color='#e2e8f0'"
+                    onmouseout="this.style.color='#475569'"
+                >✕</button>
             </div>
         </div>
-        <div style="display:flex;overflow-x:auto;border-bottom:1px solid #1e293b;background:#0c1526;flex-shrink:0;">${tabBar}</div>
-        <div style="padding:12px 14px;overflow-y:auto;flex:1;">${body}</div>`;
+        <div class="dp-tab-scroll" style="display:flex;overflow-x:auto;border-bottom:1px solid #1e293b;background:#0c1526;flex-shrink:0;">
+            ${tabBar}
+        </div>
+        <div class="dp-content" style="padding:12px 14px;overflow-y:auto;flex:1;">${body}</div>`;
 
     // Wire up global callbacks
-    window.__debugSelectTab = (tab) => { currentTab = tab; renderPanel(); };
-    window.__debugRunFullTest = runFullTest;
+    window.__debugSelectTab       = (tab) => { currentTab = tab; renderPanel(); };
+    window.__debugRunFullTest     = runFullTest;
     window.__debugTestFirebaseRead = testFirebaseRead;
 }
+
+// ── Tests ─────────────────────────────────────────────────────────
 
 async function runFullTest() {
     const results = [];
 
-    // 1. Hooks
     const h = checkHooks();
-    results.push({ label: 'KSSS_UI_HOOKS', ok: !h.isProxy && h.count > 0, detail: `${h.count} hooks` });
+    results.push({ label: 'KSSS_UI_HOOKS',    ok: !h.isProxy && h.count > 0, detail: `${h.count} hooks` });
 
-    // 2. Firebase
     const fb = checkFirebase();
-    results.push({ label: 'Firebase SDK', ok: fb.ok, detail: fb.msg });
+    results.push({ label: 'Firebase SDK',     ok: fb.ok,   detail: fb.msg });
 
-    // 3. Session
     const s = checkSession();
-    results.push({ label: 'Auth Token', ok: !!s.token, detail: s.token ? 'Present' : 'Missing' });
+    results.push({ label: 'Auth Token',       ok: !!s.token, detail: s.token ? 'Present' : 'Missing' });
+    results.push({ label: 'Admin Role',       ok: !!s.role,  detail: s.role || 'None — check secureAdminRole in sessionStorage' });
 
-    // 4. Data
     const d = checkData();
-    results.push({ label: 'Tournament Data', ok: d.ok, detail: d.msg });
+    results.push({ label: 'Tournament Data',  ok: d.ok,    detail: d.msg });
 
-    // 5. Key HTML elements
-    ['login-section','editor-section','grade-section','matches-list','loading-overlay'].forEach(id => {
-        results.push({ label: `DOM: #${id}`, ok: !!document.getElementById(id), detail: document.getElementById(id) ? 'Found' : 'MISSING FROM HTML' });
+    ['login-section','grade-section','matches-list'].forEach(id => {
+        results.push({ label: `DOM: #${id}`, ok: !!document.getElementById(id), detail: document.getElementById(id) ? 'Found' : 'MISSING' });
     });
-
-    // 6. PDF export hook
     results.push({ label: 'exportToPDF hook', ok: typeof window.KSSS_UI_HOOKS?.exportToPDF === 'function', detail: '' });
-
-    // 7. Export to CSV hook
     results.push({ label: 'exportToCSV hook', ok: typeof window.KSSS_UI_HOOKS?.exportToCSV === 'function', detail: '' });
+    results.push({ label: 'Error count',      ok: ErrorHandler.errors.length === 0, detail: `${ErrorHandler.errors.length} error(s)` });
 
-    // 8. Error count
-    results.push({ label: 'Error count', ok: ErrorHandler.errors.length === 0, detail: `${ErrorHandler.errors.length} error(s)` });
-
-    console.group('🐞 Full Debug Test Results');
+    console.group('🐞 Full Debug Test Results — v4.0');
     results.forEach(r => {
         const m = `${r.ok ? '✅' : '❌'} ${r.label}${r.detail ? ': ' + r.detail : ''}`;
         r.ok ? console.log(m) : console.error(m);
     });
     console.groupEnd();
 
-    // Report in panel
     const pass = results.filter(r => r.ok).length;
-    alert(`Full Test: ${pass}/${results.length} passed.\n\nSee the browser console (F12) for the full breakdown!`);
+    alert(`Full Test: ${pass}/${results.length} passed.\n\nSee the browser console (F12) for the breakdown!`);
 }
 
 async function testFirebaseRead() {
     try {
-        if (!window.firebase) throw new Error('window.firebase not found');
+        if (!window.firebase)          throw new Error('window.firebase not found');
         if (!window.firebase.apps.length) throw new Error('Firebase not initialized');
-        const db  = window.firebase.database();
-        const ref = db.ref('competition/grade7');
-        const snap = await ref.once('value');
+        const snap = await window.firebase.database().ref('competition/grade7').once('value');
         if (snap.exists()) {
             console.log('🔥 Firebase read success (grade7):', snap.val());
             alert('✅ Firebase read succeeded! Grade 7 data found. Check console.');
         } else {
-            console.warn('🔥 Firebase connected but grade7 node is empty.');
             alert('⚠️ Firebase connected but grade7 node has no data yet.');
         }
     } catch (e) {
