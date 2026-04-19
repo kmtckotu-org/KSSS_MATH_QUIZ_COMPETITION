@@ -5,7 +5,7 @@ import { CONFIG } from '../core/config.js';
 import { showAlertModal } from '../ui/modals.js';
 
 // URL of the watermark image. Change this string when you provide the final watermark!
-const WATERMARK_IMAGE_URL = '../static/images/MTC--LOGO--NO--B.webp';
+const WATERMARK_IMAGE_URL = 'static/images/MTC--LOGO--NO--B.webp';
 
 // Fetch an image and return it as a base64 data URL
 async function getImageDataURL(url) {

@@ -329,6 +329,9 @@ export function showStructuralAuthModal(onSuccess) {
 // --- Structural Action Log Modal ---
 export function showStructuralActionLog() {
     try {
+        // PREVENT MULTIPLE STACKED MODALS WHICH TRAP THE UI
+        closeStructuralLogModal();
+
         const logKey = 'ksss_structural_action_log';
         const log = JSON.parse(localStorage.getItem(logKey) || '[]');
 
@@ -352,7 +355,7 @@ export function showStructuralActionLog() {
             }
             html += '</ul>';
         }
-        html += '<button id="close-structural-log" style="margin-top:15px;background:#64748b;color:#fff;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;">Close</button>';
+        html += '<button id="close-structural-log" style="margin-top:15px;background:#64748b;color:#fff;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;">Cancel</button>';
 
         modal.innerHTML = html;
         document.body.appendChild(modal);

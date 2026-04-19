@@ -1,3 +1,4 @@
+import { ErrorHandler } from '../utils/errorHandler.js';
 import { store } from '../core/store.js';
 import { CONSTANTS } from '../utils/constants.js';
 import { getCachedData, setCachedData } from './cache.js';

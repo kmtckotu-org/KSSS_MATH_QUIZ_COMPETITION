@@ -13,6 +13,16 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
 
     <link rel="stylesheet" href="src/styles/main.css">
+    <script>
+        // Protective proxy: catches all UI clicks immediately before modules finish loading
+        // to prevent ReferenceErrors and provide a graceful waiting experience.
+        window.KSSS_UI_HOOKS = new Proxy({}, {
+            get(target, prop) {
+                if (target[prop]) return target[prop];
+                return () => console.warn(`UI Hook not ready yet: ${prop} (system still booting...)`);
+            }
+        });
+    </script>
     <style>
         /* Role toggle button active states */
         .role-toggle {
