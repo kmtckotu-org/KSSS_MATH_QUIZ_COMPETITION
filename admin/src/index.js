@@ -15,10 +15,8 @@ function populateAdminDropdown() {
     const select = document.getElementById("admin-name");
     if (!select) return;
 
-    // Keep only the default placeholder option
-    const defaultOpt = select.options[0];
-    select.innerHTML = "";
-    if (defaultOpt) select.appendChild(defaultOpt);
+    // Reset the options entirely
+    select.innerHTML = '<option value="">-- Select Your Name --</option>';
 
     // ── Migration: pull names from any existing ksss_admin_cred_* keys ─────────
     // This ensures anyone who had credentials stored under the old system

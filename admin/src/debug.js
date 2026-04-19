@@ -28,6 +28,14 @@ const TAB_DEFS = [
 
 export function initDebugPanel() {
     if (!CONFIG.debug) return;
+
+    // Check role
+    let isAbsolute = false;
+    try {
+        const roleObj = JSON.parse(sessionStorage.getItem('secureAdminRole') || '{}');
+        isAbsolute = roleObj.role === 'absolute';
+    } catch {}
+    if (!isAbsolute) return;
     // Don't mount twice
     if (document.getElementById('debug-toggle')) return;
 

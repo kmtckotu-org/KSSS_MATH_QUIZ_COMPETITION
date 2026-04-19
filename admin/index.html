@@ -356,10 +356,23 @@
                 // Don't double-mount
                 if (document.getElementById('debug-toggle')) return;
                 // Check both localStorage and module flag
-                const enabled = (function() {
+                const isDebugEnabled = (function() {
                     try { return localStorage.getItem('ksss_debug') === 'true' || window._KSSS_DEBUG_FLAG === true; } catch { return false; }
                 })();
-                if (!enabled) return;
+
+                // Check for absolute admin role
+                const isAbsolute = (function() {
+                    try {
+                        const roleObj = JSON.parse(sessionStorage.getItem('secureAdminRole') || '{}');
+                        return roleObj.role === 'absolute';
+                    } catch { return false; }
+                })();
+
+                if (!isDebugEnabled || !isAbsolute) {
+                    const existing = document.getElementById('debug-toggle-shell');
+                    if (existing) existing.remove();
+                    return;
+                }
 
                 const btn = document.createElement('button');
                 btn.id = 'debug-toggle-shell';
@@ -382,9 +395,11 @@
                 mountDebugToggle();
             }
 
-            // Also retry after 500ms to catch the module flag being set
-            setTimeout(mountDebugToggle, 500);
-            setTimeout(mountDebugToggle, 1500);
+            // Check role continuously so it appears immediately after login
+            const checkInterval = setInterval(mountDebugToggle, 1000);
+            
+            // Also expose it so the login hook can trigger it instantly
+            window.__mountDebugShell = mountDebugToggle;
         })();
     </script>
 </body>
