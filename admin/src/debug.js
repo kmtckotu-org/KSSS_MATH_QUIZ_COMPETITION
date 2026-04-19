@@ -598,24 +598,25 @@ function renderPanel() {
                 flex-shrink:0;
                 display:inline-flex;
                 align-items:center;
-                gap:4px;
-                padding:5px 10px;
-                border-radius:6px;
+                gap:3px;
+                padding:3px 6px;
+                border-radius:4px;
                 border:1px solid ${isActive ? 'rgba(59,130,246,0.45)' : 'transparent'};
                 background:${isActive ? 'rgba(59,130,246,0.18)' : 'transparent'};
                 color:${isActive ? '#60a5fa' : '#475569'};
                 cursor:pointer;
-                font-size:10px;
+                font-size:9px;
                 font-weight:600;
                 white-space:nowrap;
                 font-family:inherit;
                 transition:all 0.15s;
-                line-height:1.3;
+                line-height:1;
+                height: 20px;
             "
             onmouseover="if(this.id!=='dp-tab-${currentTab}'){this.style.background='#1e293b';this.style.color='#94a3b8';}"
             onmouseout="if(this.id!=='dp-tab-${currentTab}'){this.style.background='transparent';this.style.color='#475569';}">
-            <span style="font-size:13px;">${t.label}</span>
-            <span style="font-size:10px;">${t.title}</span>
+            <span style="font-size:11px;">${t.label}</span>
+            <span>${t.title}</span>
         </button>`;
     }).join('');
 
@@ -662,31 +663,9 @@ function renderPanel() {
                     >✕</button>
                 </div>
             </div>
-            <div id="dp-tab-wrap" style="display:flex;overflow-x:auto;overflow-y:hidden;padding:5px 6px;gap:3px;background:#0c1526;border-bottom:1px solid #1e293b;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;user-select:none;cursor:grab;">${tabBar}</div>
+            <div id="dp-tab-wrap" style="display:flex;overflow-x:auto;overflow-y:hidden;padding:5px 6px;gap:3px;background:#0c1526;border-bottom:1px solid #1e293b;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;user-select:none;">${tabBar}</div>
             <div id="dp-content-body" style="padding:12px 14px;overflow-y:auto;flex:1;">${body}</div>`;
-
-        // Setup drag-to-scroll only once
-        requestAnimationFrame(() => {
-            const wrap = document.getElementById('dp-tab-wrap');
-            if (!wrap || wrap._dragBound) return;
-            wrap._dragBound = true;
-            let isDown = false, startX = 0, scrollLeft = 0;
-            wrap.addEventListener('mousedown', e => {
-                isDown = true;
-                wrap.style.cursor = 'grabbing';
-                startX = e.pageX - wrap.offsetLeft;
-                scrollLeft = wrap.scrollLeft;
-            });
-            wrap.addEventListener('mouseleave', () => { isDown = false; wrap.style.cursor = 'grab'; });
-            wrap.addEventListener('mouseup',    () => { isDown = false; wrap.style.cursor = 'grab'; });
-            wrap.addEventListener('mousemove',  e => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x    = e.pageX - wrap.offsetLeft;
-                const walk = (x - startX) * 1.5;
-                wrap.scrollLeft = scrollLeft - walk;
-            });
-        });
+        // Use pure native scroll - removed custom mouse drag to fix mobile touch panning bugs
 
     } else {
         // Partial render on interval — only update data, keep scroll & events intact
