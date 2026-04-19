@@ -28,48 +28,54 @@ const TAB_DEFS = [
 
 export function initDebugPanel() {
     if (!CONFIG.debug) return;
+    // Don't mount twice
+    if (document.getElementById('debug-toggle')) return;
 
-    const isMobile = window.innerWidth <= 768;
-
-    // ── Toggle Button ─────────────────────────────────────────────
+    // ── Toggle Button: always a small circle in the bottom-left ──────
     debugToggle = document.createElement('button');
     debugToggle.id = 'debug-toggle';
-    debugToggle.innerHTML = isMobile ? '🐞' : '🐞 Debug';
-    debugToggle.title = 'Toggle debug panel (development only)';
+    debugToggle.innerHTML = '🐞';
+    debugToggle.title = 'Toggle debug panel';
     debugToggle.style.cssText = `
         position: fixed;
-        bottom: ${isMobile ? '10px' : '20px'};
-        left: ${isMobile ? '10px' : '20px'};
+        bottom: 20px;
+        left: 20px;
         z-index: 10002;
         background: #1e40af;
-        color: #bfdbfe;
-        border: 1px solid #3b82f6;
-        font-family: 'Segoe UI', monospace;
-        font-weight: 700;
-        font-size: ${isMobile ? '18px' : '11px'};
-        letter-spacing: 0.5px;
+        color: #fff;
+        border: 2px solid #3b82f6;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        font-size: 18px;
+        line-height: 1;
         cursor: pointer;
-        box-shadow: 0 4px 16px rgba(59,130,246,0.4);
-        transition: all 0.2s ease;
-        opacity: 0.85;
-        padding: ${isMobile ? '10px' : '6px 12px'};
-        border-radius: ${isMobile ? '50%' : '16px'};
-        min-width: ${isMobile ? '44px' : 'auto'};
-        min-height: ${isMobile ? '44px' : 'auto'};
-        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 16px rgba(59,130,246,0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
     `;
-    debugToggle.onmouseover = () => { debugToggle.style.opacity = '1'; debugToggle.style.background = '#2563eb'; };
-    debugToggle.onmouseout  = () => { debugToggle.style.opacity = '0.85'; debugToggle.style.background = '#1e40af'; };
+    debugToggle.onmouseover = () => {
+        debugToggle.style.transform = 'scale(1.12)';
+        debugToggle.style.boxShadow = '0 6px 20px rgba(59,130,246,0.7)';
+    };
+    debugToggle.onmouseout = () => {
+        debugToggle.style.transform = 'scale(1)';
+        debugToggle.style.boxShadow = '0 4px 16px rgba(59,130,246,0.5)';
+    };
 
-    // ── Panel ─────────────────────────────────────────────────────
+    // ── Panel: compact floating card, left side, NOT full width ──────
     debugPanel = document.createElement('div');
     debugPanel.id = 'debug-panel';
     debugPanel.style.cssText = `
         position: fixed;
-        bottom: ${isMobile ? '70px' : '70px'};
-        left: ${isMobile ? '10px' : '20px'};
-        ${isMobile ? 'right: 10px;' : 'width: 480px;'}
-        max-height: 70vh;
+        bottom: 72px;
+        left: 12px;
+        width: 380px;
+        max-width: calc(100vw - 24px);
+        max-height: 60vh;
         overflow: hidden;
         background: #0f172a;
         color: #e2e8f0;
@@ -97,7 +103,7 @@ export function initDebugPanel() {
         if (debugPanel.style.display !== 'none') renderPanel();
     }, 2000);
 
-    // Error badge click → switch to errors tab
+    // Flash red on error
     ErrorHandler.onError(() => {
         if (debugPanel.style.display !== 'none') renderPanel();
         flashToggle();
@@ -183,12 +189,11 @@ function renderOverview() {
         ${row('UI Hooks', !hooks.isProxy && hooks.count > 0, hooks.isProxy ? '⚠️ Boot proxy still active (modules loading…)' : `${hooks.count} hooks registered`)}
         ${row('Error Count', errors === 0, errors === 0 ? 'No errors' : `${errors} error(s) captured`)}
         ${row('Registry', sess.registry.length > 0, sess.registry.length > 0 ? sess.registry.join(', ') : 'No admins registered on this device')}
-        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
-            <button onclick="window.__debugRunFullTest()" style="background:#1e40af;color:#bfdbfe;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;">⚡ Run Full Test</button>
-            <button onclick="localStorage.setItem('ksss_debug','true')" style="background:#0f766e;color:#99f6e4;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">📌 Pin Debug ON</button>
-            <button onclick="localStorage.removeItem('ksss_debug')" style="background:#4b5563;color:#d1d5db;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:11px;">📌 Pin Debug OFF</button>
+        <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
+            <button onclick="window.__debugRunFullTest()" style="background:#1e40af;color:#bfdbfe;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;white-space:nowrap;">⚡ Test</button>
+            <button onclick="localStorage.setItem('ksss_debug','true')" style="background:#0f766e;color:#99f6e4;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 ON</button>
+            <button onclick="localStorage.setItem('ksss_debug','false')" style="background:#4b5563;color:#d1d5db;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 OFF</button>
         </div>`;
-}
 
 function renderHooks() {
     const hooks = checkHooks();
@@ -314,7 +319,7 @@ function renderPanel() {
     const tabBar = TAB_DEFS.map(t => `
         <button
             onclick="window.__debugSelectTab('${t.id}')"
-            style="flex:1;background:${currentTab===t.id?'#1e40af':'transparent'};color:${currentTab===t.id?'#bfdbfe':'#64748b'};border:none;border-bottom:2px solid ${currentTab===t.id?'#60a5fa':'transparent'};padding:6px 2px;cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;transition:all 0.15s;">
+            style="flex-shrink:0;background:${currentTab===t.id?'#1e40af':'transparent'};color:${currentTab===t.id?'#bfdbfe':'#64748b'};border:none;border-bottom:2px solid ${currentTab===t.id?'#60a5fa':'transparent'};padding:6px 8px;cursor:pointer;font-size:9px;font-weight:700;white-space:nowrap;transition:all 0.15s;">
             ${t.label}
         </button>`).join('');
 

@@ -363,9 +363,9 @@
 
                 const btn = document.createElement('button');
                 btn.id = 'debug-toggle-shell';
-                btn.innerHTML = window.innerWidth <= 768 ? '🐞' : '🐞 Debug';
+                btn.innerHTML = '🐞';
                 btn.title = 'Toggle debug panel';
-                btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:99999;background:#1e40af;color:#bfdbfe;border:1px solid #3b82f6;padding:6px 12px;border-radius:16px;font-weight:700;font-size:11px;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,0.4);opacity:0.9;';
+                btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:99999;background:#1e40af;color:#fff;border:2px solid #3b82f6;width:42px;height:42px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,0.5);display:flex;align-items:center;justify-content:center;padding:0;';
                 btn.onclick = function() {
                     // Delegate to the real debug panel if loaded
                     const realToggle = document.getElementById('debug-toggle');
