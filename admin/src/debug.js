@@ -588,14 +588,36 @@ function renderPanel() {
     const roleLabel  = sess.role ? sess.role.toUpperCase() : 'NO ROLE';
     const roleColor  = sess.role === 'absolute' ? '#fbbf24' : sess.role ? '#60a5fa' : '#ef4444';
 
-    const tabBar = TAB_DEFS.map(t => `
-        <button
-            class="dp-tab-btn ${currentTab === t.id ? 'active' : ''}"
+    const tabBar = TAB_DEFS.map(t => {
+        const isActive = currentTab === t.id;
+        return `<button
+            id="dp-tab-${t.id}"
             onclick="window.__debugSelectTab('${t.id}')"
-            title="${t.title}">
-            <span class="dp-tab-icon">${t.label}</span>
-            <span class="dp-tab-lbl">${t.title}</span>
-        </button>`).join('');
+            title="${t.title}"
+            style="
+                flex-shrink:0;
+                display:inline-flex;
+                align-items:center;
+                gap:4px;
+                padding:5px 10px;
+                border-radius:6px;
+                border:1px solid ${isActive ? 'rgba(59,130,246,0.45)' : 'transparent'};
+                background:${isActive ? 'rgba(59,130,246,0.18)' : 'transparent'};
+                color:${isActive ? '#60a5fa' : '#475569'};
+                cursor:pointer;
+                font-size:10px;
+                font-weight:600;
+                white-space:nowrap;
+                font-family:inherit;
+                transition:all 0.15s;
+                line-height:1.3;
+            "
+            onmouseover="if(this.id!=='dp-tab-${currentTab}'){this.style.background='#1e293b';this.style.color='#94a3b8';}"
+            onmouseout="if(this.id!=='dp-tab-${currentTab}'){this.style.background='transparent';this.style.color='#475569';}">
+            <span style="font-size:13px;">${t.label}</span>
+            <span style="font-size:10px;">${t.title}</span>
+        </button>`;
+    }).join('');
 
     let body = '';
     switch (currentTab) {
@@ -637,8 +659,8 @@ function renderPanel() {
                 >✕</button>
             </div>
         </div>
-        <div class="dp-tab-wrap" id="dp-tab-wrap">${tabBar}</div>
-        <div class="dp-content" style="padding:12px 14px;overflow-y:auto;flex:1;">${body}</div>`;
+        <div id="dp-tab-wrap" style="display:flex;overflow-x:auto;overflow-y:hidden;padding:5px 6px;gap:3px;background:#0c1526;border-bottom:1px solid #1e293b;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;user-select:none;cursor:grab;">${tabBar}</div>
+        <div style="padding:12px 14px;overflow-y:auto;flex:1;">${body}</div>`;
 
     // Wire up global callbacks
     window.__debugSelectTab = (tab) => {

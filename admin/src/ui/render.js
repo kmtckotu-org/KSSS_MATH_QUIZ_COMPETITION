@@ -48,7 +48,12 @@ export function createMatchCard(m, rIdx, mIdx, isLocked) {
     card.appendChild(header);
 
     if (isLocked) {
-        const meta = createEl("div", "", `📅 ${m.schedule.date ?? "-"}  ⏰ ${m.schedule.time ?? "-"}  📍 ${m.schedule.location ?? "-"}`, "font-size:12px; color:#64748b; text-align:center; width:100%; display:block; padding:4px 0; letter-spacing:0.02em;");
+        // ── Schedule meta: 3 equal-width centered pills ──────────────────
+        const meta = createEl("div", "", null, "display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; width:100%; margin:6px 0 10px;");
+        const pillStyle = "text-align:center; font-size:11px; font-weight:600; padding:4px 6px; border-radius:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+        meta.appendChild(createEl("span", "", `📅 ${m.schedule.date ?? "TBA"}`, pillStyle + "background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.25);"));
+        meta.appendChild(createEl("span", "", `⏰ ${m.schedule.time ?? "TBA"}`, pillStyle + "background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.25);"));
+        meta.appendChild(createEl("span", "", `📍 ${m.schedule.location ?? "TBA"}`, pillStyle + "background:rgba(99,102,241,0.15); color:#a5b4fc; border:1px solid rgba(99,102,241,0.25);"));
         card.appendChild(meta);
         const scores = createEl("div", "", null, "display:flex; justify-content:space-between; margin-top:10px; font-weight:bold;");
         scores.appendChild(createEl("span", "", `${m.teamA.name}: ${m.teamA.points ?? "-"}`));
