@@ -194,6 +194,7 @@ function renderOverview() {
             <button onclick="localStorage.setItem('ksss_debug','true')" style="background:#0f766e;color:#99f6e4;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 ON</button>
             <button onclick="localStorage.setItem('ksss_debug','false')" style="background:#4b5563;color:#d1d5db;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 OFF</button>
         </div>`;
+}
 
 function renderHooks() {
     const hooks = checkHooks();
