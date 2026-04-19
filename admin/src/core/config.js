@@ -31,7 +31,7 @@ const repositoryConfig = resolveRepositoryConfig();
 export const CONFIG = {
     owner: repositoryConfig.owner,
     repo: repositoryConfig.repo,
-    version: "2.2.16",
+    version: "2.2.17",
     // Debug mode: set true here to enable, or toggle at runtime via:
     //   localStorage.setItem('ksss_debug', 'true')  → then refresh to enable
     //   localStorage.removeItem('ksss_debug')        → then refresh to disable

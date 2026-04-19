@@ -48,7 +48,7 @@ export function createMatchCard(m, rIdx, mIdx, isLocked) {
     card.appendChild(header);
 
     if (isLocked) {
-        const meta = createEl("div", "", `${m.schedule.date ?? "-"} | ${m.schedule.time ?? "-"} | ${m.schedule.location ?? "-"}`, "font-size:12px; color:#64748b;");
+        const meta = createEl("div", "", `📅 ${m.schedule.date ?? "-"}  ⏰ ${m.schedule.time ?? "-"}  📍 ${m.schedule.location ?? "-"}`, "font-size:12px; color:#64748b; text-align:center; width:100%; display:block; padding:4px 0; letter-spacing:0.02em;");
         card.appendChild(meta);
         const scores = createEl("div", "", null, "display:flex; justify-content:space-between; margin-top:10px; font-weight:bold;");
         scores.appendChild(createEl("span", "", `${m.teamA.name}: ${m.teamA.points ?? "-"}`));

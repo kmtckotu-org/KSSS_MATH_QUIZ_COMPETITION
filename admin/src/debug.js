@@ -36,37 +36,44 @@ function injectStyles() {
         .dp-content::-webkit-scrollbar { width: 4px; }
         .dp-content::-webkit-scrollbar-track { background: transparent; }
         .dp-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
-        .dp-tab-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 4px;
-            padding: 8px 10px;
+        .dp-tab-wrap {
+            display: flex;
+            overflow-x: auto;
+            overflow-y: hidden;
             background: #0c1526;
             border-bottom: 1px solid #1e293b;
             flex-shrink: 0;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            user-select: none;
+            cursor: grab;
+            gap: 2px;
+            padding: 4px 6px;
         }
+        .dp-tab-wrap::-webkit-scrollbar { height: 0; }
+        .dp-tab-wrap.dragging { cursor: grabbing; }
         .dp-tab-btn {
+            flex-shrink: 0;
             background: transparent;
             color: #475569;
             border: 1px solid transparent;
             border-radius: 6px;
-            padding: 5px 4px;
+            padding: 5px 9px;
             cursor: pointer;
             font-size: 10px;
             font-weight: 600;
             white-space: nowrap;
             transition: all 0.15s;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 2px;
-            line-height: 1;
+            gap: 5px;
+            line-height: 1.2;
             font-family: inherit;
         }
-        .dp-tab-btn .dp-tab-icon { font-size: 14px; }
-        .dp-tab-btn .dp-tab-lbl  { font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; }
-        .dp-tab-btn:hover  { background: #1e293b; color: #94a3b8; border-color: #334155; }
-        .dp-tab-btn.active { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.4); }
+        .dp-tab-btn .dp-tab-icon { font-size: 13px; }
+        .dp-tab-btn .dp-tab-lbl  { font-size: 10px; letter-spacing: 0.02em; }
+        .dp-tab-btn:hover  { background: #1e293b; color: #94a3b8; }
+        .dp-tab-btn.active { background: rgba(59,130,246,0.18); color: #60a5fa; border-color: rgba(59,130,246,0.4); }
         .dp-row {
             display: flex;
             align-items: flex-start;
@@ -630,13 +637,61 @@ function renderPanel() {
                 >✕</button>
             </div>
         </div>
-        <div class="dp-tab-grid">${tabBar}</div>
+        <div class="dp-tab-wrap" id="dp-tab-wrap">${tabBar}</div>
         <div class="dp-content" style="padding:12px 14px;overflow-y:auto;flex:1;">${body}</div>`;
 
     // Wire up global callbacks
-    window.__debugSelectTab       = (tab) => { currentTab = tab; renderPanel(); };
-    window.__debugRunFullTest     = runFullTest;
+    window.__debugSelectTab = (tab) => {
+        currentTab = tab;
+        renderPanel();
+        // Auto-scroll active tab button into view
+        requestAnimationFrame(() => {
+            const wrap = document.getElementById('dp-tab-wrap');
+            const active = wrap?.querySelector('.dp-tab-btn.active');
+            if (active && wrap) {
+                const wrapRect   = wrap.getBoundingClientRect();
+                const btnRect    = active.getBoundingClientRect();
+                const offset     = btnRect.left - wrapRect.left - (wrapRect.width / 2) + (btnRect.width / 2);
+                wrap.scrollBy({ left: offset, behavior: 'smooth' });
+            }
+        });
+    };
+    window.__debugRunFullTest      = runFullTest;
     window.__debugTestFirebaseRead = testFirebaseRead;
+
+    // Drag-to-scroll on the tab bar
+    requestAnimationFrame(() => {
+        const wrap = document.getElementById('dp-tab-wrap');
+        if (!wrap || wrap._dragBound) return;
+        wrap._dragBound = true;
+        let isDown = false, startX = 0, scrollLeft = 0;
+        wrap.addEventListener('mousedown', e => {
+            isDown = true;
+            wrap.classList.add('dragging');
+            startX = e.pageX - wrap.offsetLeft;
+            scrollLeft = wrap.scrollLeft;
+        });
+        wrap.addEventListener('mouseleave', () => { isDown = false; wrap.classList.remove('dragging'); });
+        wrap.addEventListener('mouseup',    () => { isDown = false; wrap.classList.remove('dragging'); });
+        wrap.addEventListener('mousemove',  e => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x    = e.pageX - wrap.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            wrap.scrollLeft = scrollLeft - walk;
+        });
+    });
+    // Scroll active tab into view on initial render
+    requestAnimationFrame(() => {
+        const wrap = document.getElementById('dp-tab-wrap');
+        const active = wrap?.querySelector('.dp-tab-btn.active');
+        if (active && wrap) {
+            const wrapRect = wrap.getBoundingClientRect();
+            const btnRect  = active.getBoundingClientRect();
+            const offset   = btnRect.left - wrapRect.left - (wrapRect.width / 2) + (btnRect.width / 2);
+            wrap.scrollBy({ left: offset, behavior: 'smooth' });
+        }
+    });
 }
 
 // ── Tests ─────────────────────────────────────────────────────────
