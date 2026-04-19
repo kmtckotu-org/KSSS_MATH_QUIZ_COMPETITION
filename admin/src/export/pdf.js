@@ -4,12 +4,14 @@ import { showStatus } from '../utils/dom.js';
 import { CONFIG } from '../core/config.js';
 import { showAlertModal } from '../ui/modals.js';
 
-// Fetch the club logo and return it as a base64 data URL
-// so it works in a new blank window without CORS issues.
-async function getLogoDataURL() {
+// URL of the watermark image. Change this string when you provide the final watermark!
+const WATERMARK_IMAGE_URL = '../static/images/MTC--LOGO--NO--B.webp';
+
+// Fetch an image and return it as a base64 data URL
+async function getImageDataURL(url) {
   try {
-    const res  = await fetch('../static/images/Kotusss_logo.png');
-    if (!res.ok) throw new Error('Logo fetch failed');
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('Image fetch failed');
     const blob = await res.blob();
     return new Promise(resolve => {
       const reader     = new FileReader();
@@ -35,13 +37,16 @@ export async function exportToPDF() {
     return;
   }
 
-  // Fetch logo so the print window can embed it as base64
-  const logoDataURL = await getLogoDataURL();
+  // Fetch logo and watermark so the print window can embed them as base64
+  const [logoDataURL, watermarkDataURL] = await Promise.all([
+    getImageDataURL('../static/images/Kotusss_logo.png'),
+    getImageDataURL(WATERMARK_IMAGE_URL)
+  ]);
 
-  // Watermark element — only rendered if we got the logo
-  const watermarkHTML = logoDataURL
+  // Watermark element — using the dedicated watermark URL you requested
+  const watermarkHTML = watermarkDataURL
     ? `<div class="watermark">
-         <img src="${logoDataURL}" alt="KSSS Logo watermark">
+         <img src="${watermarkDataURL}" alt="KMTC Watermark">
        </div>`
     : "";
 
@@ -97,7 +102,7 @@ export async function exportToPDF() {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>KSSS Math Quiz — Grade ${currentData.grade} Report</title>
+  <title>KMTC Math Quiz — Grade ${currentData.grade} Report</title>
   <style>
     /* ── Reset & page ─────────────────────────────────────── */
     @page { size: A4; margin: 1.8cm; }
@@ -329,7 +334,7 @@ export async function exportToPDF() {
           ? `<img src="${logoDataURL}" alt="KSSS Logo" class="header-logo">`
           : ""}
         <div class="header-text">
-          <h1>KSSS Maths &amp; Tech Club</h1>
+          <h1>KMTC Maths &amp; Tech Club</h1>
           <p>Kotu Senior Secondary School &middot; Mathematics Quiz Competition</p>
         </div>
       </div>
@@ -366,7 +371,7 @@ export async function exportToPDF() {
     <!-- Footer -->
     <div class="doc-footer">
       <span class="motto">&ldquo;Multiply Your Knowledge &middot; Divide Your Doubts&rdquo;</span>
-      <span>KSSS-MTC Tournament Management System &middot; v${CONFIG.version}</span>
+      <span>KMTC Tournament Management System &middot; v${CONFIG.version}</span>
     </div>
 
   </div>
