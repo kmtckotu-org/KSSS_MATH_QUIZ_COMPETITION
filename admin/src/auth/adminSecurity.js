@@ -16,18 +16,13 @@ import { setButtonLoading } from '../utils/dom.js';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const SALT               = "ksss-secure-salt-v1";
-const STORAGE_KEY        = (name) => `ksss_admin_cred_${name}`;
-const ROLE_HINT_KEY      = (name) => `ksss_admin_role_${name}`;
-const REGISTRY_KEY       = "ksss_admin_registry";
 // SHA-256 hash of the structural authority code (only VP knows the plaintext)
 const ABSOLUTE_CODE_HASH = "45888f0c28b9e1007b74238f0dd90312efe9b3c4298957c80079845ed7725384";
 
 let role           = null;
 let isInitializing = false;
 
-// ── Device registry & Role hints ───────────────────────────────────────────────
-// We no longer use localStorage for registry. Everything lives in RTDB.
-
+// ── Role hints ─────────────────────────────────────────────────────────────────
 function getAdminsRef() {
   const db = getDatabase();
   return db.ref('admins');

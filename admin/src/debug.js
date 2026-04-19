@@ -6,6 +6,7 @@ import { CONFIG } from './core/config.js';
 let debugPanel = null;
 let debugToggle = null;
 let currentTab = 'overview';
+let debugInterval = null;
 
 const TAB_DEFS = [
     { id: 'overview',   label: '📊 Overview'  },
@@ -99,7 +100,8 @@ export function initDebugPanel() {
     document.body.appendChild(debugPanel);
 
     // Auto-refresh every 2 seconds when visible
-    setInterval(() => {
+    if (debugInterval) clearInterval(debugInterval);
+    debugInterval = setInterval(() => {
         if (debugPanel.style.display !== 'none') renderPanel();
     }, 2000);
 
@@ -109,6 +111,11 @@ export function initDebugPanel() {
         flashToggle();
     });
 }
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+    if (debugInterval) clearInterval(debugInterval);
+});
 
 function flashToggle() {
     if (!debugToggle) return;
@@ -138,11 +145,7 @@ function checkSession() {
     const token   = sessionStorage.getItem('githubToken') || null;
     const user    = sessionStorage.getItem('adminUser')   || localStorage.getItem('ksss_current_user') || null;
     const role    = sessionStorage.getItem('adminRole')   || null;
-    const registry = (() => {
-        try { return JSON.parse(localStorage.getItem('ksss_admin_registry') || '[]'); }
-        catch { return []; }
-    })();
-    return { token, user, role, registry };
+    return { token, user, role };
 }
 
 function checkData() {
@@ -188,7 +191,6 @@ function renderOverview() {
         ${row('Tournament Data', data.ok, data.ok ? `Grade ${data.grade} · ${data.rounds}R · ${data.matches}M (${data.completed} done)` : data.msg)}
         ${row('UI Hooks', !hooks.isProxy && hooks.count > 0, hooks.isProxy ? '⚠️ Boot proxy still active (modules loading…)' : `${hooks.count} hooks registered`)}
         ${row('Error Count', errors === 0, errors === 0 ? 'No errors' : `${errors} error(s) captured`)}
-        ${row('Registry', sess.registry.length > 0, sess.registry.length > 0 ? sess.registry.join(', ') : 'No admins registered on this device')}
         <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
             <button onclick="window.__debugRunFullTest()" style="background:#1e40af;color:#bfdbfe;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;font-weight:600;white-space:nowrap;">⚡ Test</button>
             <button onclick="localStorage.setItem('ksss_debug','true')" style="background:#0f766e;color:#99f6e4;border:none;padding:4px 8px;border-radius:5px;cursor:pointer;font-size:10px;white-space:nowrap;">📌 ON</button>
@@ -247,7 +249,6 @@ function renderSession() {
             <div><span style="color:#94a3b8">User:</span> <span style="color:#a5f3fc">${s.user || '<none>'}</span></div>
             <div><span style="color:#94a3b8">Role:</span> <span style="color:#a5f3fc">${s.role || '<none>'}</span></div>
             <div><span style="color:#94a3b8">Token:</span> <span style="color:${s.token ? '#4ade80' : '#f87171'}">${s.token ? `✅ Present (${s.token.length} chars)` : '❌ Not set'}</span></div>
-            <div><span style="color:#94a3b8">Registry:</span> <span style="color:#fbbf24">${s.registry.length ? s.registry.join(', ') : 'Empty'}</span></div>
         </div>
         <div style="margin-top:8px;display:flex;gap:6px;">
             <button onclick="sessionStorage.clear();location.reload();" style="background:#dc2626;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:10px;">🔴 Force Logout</button>

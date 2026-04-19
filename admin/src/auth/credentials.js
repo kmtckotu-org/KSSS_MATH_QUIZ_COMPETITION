@@ -12,7 +12,7 @@
 //     → Choose role: Limited Admin or Absolute Admin
 //     → Enter your name, GitHub token, and a password
 //     → If Absolute: also enter the structural authority code
-//     → Your encrypted token is stored on this device only
+//     → Your encrypted token is safely stored globally
 //
 //   Every login after that:
 //     → Select your name from the dropdown
@@ -30,10 +30,11 @@
 // ── SECURITY MODEL ────────────────────────────────────────────────────────────
 //
 //   • Each admin's GitHub token is encrypted with their password using AES-GCM
-//     (PBKDF2, 200,000 iterations) and stored in localStorage on their device.
+//     (PBKDF2, 200,000 iterations) and stored in Firebase Realtime Database
+//     under the /admins node.
 //
-//   • The device's localStorage is the security boundary for returning users.
-//     No one else on a different device can use your credentials.
+//   • The encrypted blob is fetched from RTDB during login and decrypted locally.
+//     No credentials are stored on the device.
 //
 //   • The structural authority code is the gate to claiming the Absolute role.
 //     Its SHA-256 hash is stored in adminSecurity.js.
