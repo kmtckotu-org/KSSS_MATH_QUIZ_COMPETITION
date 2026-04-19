@@ -81,7 +81,7 @@
                         title="Toggle between dark and light theme" aria-label="Toggle between dark and light theme">
                         <span id="theme-icon">🌙</span>
                     </button>
-                    <div class="system-badge">v2.2.8</div>
+                    <div class="system-badge">v2.2.9</div>
                 </div>
             </div>
             <div id="admin-display" style="color: var(--text-muted); font-size: 14px; font-weight: normal;">
@@ -97,6 +97,47 @@
                             onchange="KSSS_UI_HOOKS.onAdminNameChange()">
                             <option value="">-- Select Your Name --</option>
                         </select>
+                        <!-- Inline fallback: populates dropdown WITHOUT needing index.js module to load -->
+                        <script>
+                            (function() {
+                                function fillAdminDropdown() {
+                                    var sel = document.getElementById('admin-name');
+                                    if (!sel) return;
+                                    // Reset to just placeholder
+                                    sel.innerHTML = '<option value="">-- Select Your Name --</option>';
+                                    // Read registry
+                                    var registry = [];
+                                    try { registry = JSON.parse(localStorage.getItem('ksss_admin_registry') || '[]'); } catch(e) {}
+                                    if (!Array.isArray(registry)) registry = [];
+                                    // Migrate old-format keys
+                                    try {
+                                        for (var i = 0, n = localStorage.length; i < n; i++) {
+                                            var k = localStorage.key(i);
+                                            if (k && k.indexOf('ksss_admin_cred_') === 0) {
+                                                var nm = k.slice('ksss_admin_cred_'.length);
+                                                if (nm && registry.indexOf(nm) === -1) registry.push(nm);
+                                            }
+                                        }
+                                    } catch(e) {}
+                                    // Append names
+                                    for (var j = 0; j < registry.length; j++) {
+                                        var opt = document.createElement('option');
+                                        opt.value = registry[j];
+                                        opt.textContent = registry[j];
+                                        sel.appendChild(opt);
+                                    }
+                                    // Always add First Login option
+                                    var ftOpt = document.createElement('option');
+                                    ftOpt.value = '__first_time__';
+                                    ftOpt.textContent = '➕ First login on this device';
+                                    sel.appendChild(ftOpt);
+                                }
+                                // Run now (script is inline after the select, so DOM is ready here)
+                                fillAdminDropdown();
+                                // Expose so the module can refresh it after registration
+                                window.__refreshAdminDropdown = fillAdminDropdown;
+                            })();
+                        </script>
                     </div>
                     <div class="input-group">
                         <label for="admin-password" id="password-label">🔑 Password</label>
@@ -334,7 +375,7 @@
     </div>
 
     <!-- CORRECTED SCRIPT TAG: now points to src/index.js -->
-    <script type="module" src="src/index.js?v=2.2.8"></script>
+    <script type="module" src="src/index.js?v=2.2.9"></script>
 
     <!-- STANDALONE DEBUG BOOTSTRAPPER: runs first, independent of ES module loading -->
     <!-- This guarantees the 🐞 bug icon always appears when CONFIG.debug = true     -->

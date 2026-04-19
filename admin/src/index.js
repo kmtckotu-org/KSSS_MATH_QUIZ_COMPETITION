@@ -9,60 +9,11 @@ import { CONFIG } from './core/config.js';
 // Make store globally accessible for debugging
 window.__store = store;
 
-// Populate the admin name dropdown from the device registry (localStorage).
-// Names are added here the first time an admin sets up on this device.
-function populateAdminDropdown() {
-    const select = document.getElementById("admin-name");
-    if (!select) return;
-
-    // Reset the options entirely
-    select.innerHTML = '<option value="">-- Select Your Name --</option>';
-
-    // ── Migration: pull names from any existing ksss_admin_cred_* keys ─────────
-    // This ensures anyone who had credentials stored under the old system
-    // still sees their name in the dropdown without needing to re-register.
-    let registry = [];
-    try { 
-        registry = JSON.parse(localStorage.getItem("ksss_admin_registry") || "[]"); 
-        if (!Array.isArray(registry)) registry = [];
-    }
-    catch { registry = []; }
-
-    let migrated = false;
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith("ksss_admin_cred_")) {
-            const name = key.slice("ksss_admin_cred_".length);
-            if (name && Array.isArray(registry) && !registry.includes(name)) {
-                registry.push(name);
-                migrated = true;
-            }
-        }
-    }
-    if (migrated) {
-        localStorage.setItem("ksss_admin_registry", JSON.stringify(registry));
-    }
-    // ──────────────────────────────────────────────────────────────────────────
-
-    if (Array.isArray(registry)) {
-        registry.forEach(name => {
-            const opt = document.createElement("option");
-            opt.value       = name;
-            opt.textContent = name;
-            select.appendChild(opt);
-        });
-    }
-
-    // Always include the first-time option at the bottom
-    const ftOpt = document.createElement("option");
-    ftOpt.value       = "__first_time__";
-    ftOpt.textContent = "\u2795 First login on this device";
-    select.appendChild(ftOpt);
-}
-populateAdminDropdown();
-
 // Expose so adminSecurity.js can refresh after a new admin registers
-window.__refreshAdminDropdown = populateAdminDropdown;
+// (The actual fill function is defined inline in index.html; this is just a compatibility shim)
+if (!window.__refreshAdminDropdown) {
+    window.__refreshAdminDropdown = function() {};
+}
 
 // --- Immediate UI correction in case page was restored from bfcache ---
 if (!sessionStorage.getItem("githubToken")) {
