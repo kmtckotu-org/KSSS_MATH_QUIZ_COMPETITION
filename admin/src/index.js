@@ -43,6 +43,7 @@ async function initializeApp() {
         // Initialize debug panel dynamically so any failure in debug.js
         // cannot block the rest of the app from loading
         import('./debug.js').then(dbg => {
+            window.__initDebugPanel = dbg.initDebugPanel;
             try { dbg.initDebugPanel(); } catch(e) { console.warn('Debug panel skipped:', e.message); }
         }).catch(e => console.warn('debug.js failed to load:', e.message));
 

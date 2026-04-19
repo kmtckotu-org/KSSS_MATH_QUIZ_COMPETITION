@@ -277,6 +277,11 @@ function finishLogin(token, adminName) {
     `<a href="#" onclick="KSSS_UI_HOOKS.logout(); return false;" ` +
     `style="color:var(--danger);margin-left:10px;">Logout</a>`;
   showRoleBadge();
+  
+  // Re-run debug panel initialization now that role is established
+  if (window.__initDebugPanel) {
+      window.__initDebugPanel();
+  }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
