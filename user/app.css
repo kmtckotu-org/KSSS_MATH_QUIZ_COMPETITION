@@ -854,7 +854,8 @@ button, a, select { min-height: 48px; }
 /* ── Footer ─────────────────────────────────────────────── */
 .site-footer {
   text-align: center;
-  padding: 18px 16px;
+  padding: 18px 16px max(18px, env(safe-area-inset-bottom, 0px));
+  /* Dynamic padding adapts exactly to the phone's physical soft keys, but removes padding on computers */
   margin-top: 32px;
   border-top: 1px solid var(--border);
   background: var(--card);

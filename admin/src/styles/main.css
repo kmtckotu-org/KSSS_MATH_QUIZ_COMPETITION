@@ -733,7 +733,7 @@ button:disabled {
     left: 0;
     right: 0;
     background: var(--card-bg);
-    padding: 15px 20px;
+    padding: 15px 20px max(15px, env(safe-area-inset-bottom, 0px)); /* Dynamically shift Save button above Android soft-keys */
     border-top: 2px solid var(--border-color);
     display: flex;
     justify-content: center;
