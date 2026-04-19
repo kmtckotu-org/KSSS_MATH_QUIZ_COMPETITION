@@ -276,7 +276,15 @@ function addRoundManagementControls(container, round, rIdx) {
         controlsDiv.appendChild(blStatus);
     }
 
-    if (canGenerateNextRound()) {
+    // Show generate button ONLY when:
+    // 1. This round IS the last round (not an older round)
+    // 2. The round is complete (all matches have winners)
+    // 3. Enough qualified teams for next round (even number, >= 2)
+    const currentData = store.getCurrentData();
+    const isLastRound = rIdx === currentData.rounds.length - 1;
+    const canGenerate = isLastRound && roundComplete && qualified.length >= 2 && qualified.length % 2 === 0;
+
+    if (canGenerate) {
         const genBtn = createEl("button", "", "➕ Generate Next Round", "background: var(--success); margin-bottom: 10px; width:100%; padding:10px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;");
         genBtn.dataset.action = "showRoundGenerator";
         genBtn.dataset.params = JSON.stringify([rIdx]);
@@ -284,6 +292,9 @@ function addRoundManagementControls(container, round, rIdx) {
     } else if (!roundComplete) {
         const warning = createEl("div", "", "⚠️ Complete all matches before generating next round", "padding: 10px; background: var(--info-bg); border: 1px solid var(--info-border); border-radius: 6px; color: var(--info-text); margin-bottom: 10px;");
         controlsDiv.appendChild(warning);
+    } else if (isLastRound && qualified.length % 2 !== 0) {
+        const oddWarning = createEl("div", "", `⚠️ ${qualified.length} qualified teams — need an even number to generate next round (use Best Loser to add one more)`, "padding: 10px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 6px; color: var(--warning-text); margin-bottom: 10px;");
+        controlsDiv.appendChild(oddWarning);
     }
 
     if (roundComplete && qualified.length === 1) {

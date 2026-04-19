@@ -87,6 +87,9 @@ window.addEventListener('pageshow', (event) => {
 
 async function initializeApp() {
     try {
+        // Initialize debug panel FIRST so it is always visible even if modules fail below
+        initDebugPanel();
+
         // Phase 1: Core modules (must succeed)
         const core = await loadModules([
             { name: 'config', path: './core/config.js', critical: true },
@@ -235,8 +238,8 @@ async function initializeApp() {
         // Initialize theme
         if (core.theme?.initTheme) core.theme.initTheme();
 
-        // Initialize debug panel if in debug mode
-        initDebugPanel();
+        // Initialize debug panel was already called at the start
+        // (keeps the panel alive even if some modules failed to load)
 
         // Start session verification
         if (authModule.adminSecurity) {
