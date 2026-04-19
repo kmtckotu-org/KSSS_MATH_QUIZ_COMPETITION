@@ -38,32 +38,32 @@ export function initDebugPanel() {
     debugToggle.title = 'Toggle debug panel';
     debugToggle.style.cssText = `
         position: fixed;
-        bottom: 20px;
-        left: 20px;
+        bottom: 10px;
+        left: 10px;
         z-index: 10002;
-        background: #1e40af;
-        color: #fff;
-        border: 2px solid #3b82f6;
-        width: 42px;
-        height: 42px;
+        background: rgba(100, 116, 139, 0.2);
+        color: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(100, 116, 139, 0.3);
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        font-size: 18px;
+        font-size: 14px;
         line-height: 1;
         cursor: pointer;
-        box-shadow: 0 4px 16px rgba(59,130,246,0.5);
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0;
+        opacity: 0.5;
     `;
     debugToggle.onmouseover = () => {
-        debugToggle.style.transform = 'scale(1.12)';
-        debugToggle.style.boxShadow = '0 6px 20px rgba(59,130,246,0.7)';
+        debugToggle.style.opacity = '1';
+        debugToggle.style.background = 'rgba(100, 116, 139, 0.8)';
     };
     debugToggle.onmouseout = () => {
-        debugToggle.style.transform = 'scale(1)';
-        debugToggle.style.boxShadow = '0 4px 16px rgba(59,130,246,0.5)';
+        debugToggle.style.opacity = '0.5';
+        debugToggle.style.background = 'rgba(100, 116, 139, 0.2)';
     };
 
     // ── Panel: compact floating card, left side, NOT full width ──────

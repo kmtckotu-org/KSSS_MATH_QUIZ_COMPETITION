@@ -81,7 +81,7 @@
                         title="Toggle between dark and light theme" aria-label="Toggle between dark and light theme">
                         <span id="theme-icon">🌙</span>
                     </button>
-                    <div class="system-badge">v2.2.10</div>
+                    <div class="system-badge">v2.2.11</div>
                 </div>
             </div>
             <div id="admin-display" style="color: var(--text-muted); font-size: 14px; font-weight: normal;">
@@ -375,7 +375,7 @@
     </div>
 
     <!-- CORRECTED SCRIPT TAG: now points to src/index.js -->
-    <script type="module" src="src/index.js?v=2.2.10"></script>
+    <script type="module" src="src/index.js?v=2.2.11"></script>
 
     <!-- STANDALONE DEBUG BOOTSTRAPPER: runs first, independent of ES module loading -->
     <!-- This guarantees the 🐞 bug icon always appears when CONFIG.debug = true     -->
@@ -419,7 +419,9 @@
                 btn.id = 'debug-toggle-shell';
                 btn.innerHTML = '🐞';
                 btn.title = 'Toggle debug panel';
-                btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:99999;background:#1e40af;color:#fff;border:2px solid #3b82f6;width:42px;height:42px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;box-shadow:0 4px 16px rgba(59,130,246,0.5);display:flex;align-items:center;justify-content:center;padding:0;';
+                btn.style.cssText = 'position:fixed;bottom:10px;left:10px;z-index:99999;background:rgba(100,116,139,0.2);color:rgba(255,255,255,0.4);border:1px solid rgba(100,116,139,0.3);width:32px;height:32px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer;opacity:0.5;display:flex;align-items:center;justify-content:center;padding:0;transition:all 0.2s;';
+                btn.onmouseover = function() { btn.style.opacity = '1'; btn.style.background = 'rgba(100,116,139,0.8)'; };
+                btn.onmouseout = function() { btn.style.opacity = '0.5'; btn.style.background = 'rgba(100,116,139,0.2)'; };
                 btn.onclick = function() {
                     // Delegate to the real debug panel if loaded
                     const realToggle = document.getElementById('debug-toggle');
